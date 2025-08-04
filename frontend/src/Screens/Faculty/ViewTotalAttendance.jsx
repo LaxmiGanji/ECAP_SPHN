@@ -59,7 +59,7 @@ const ViewTotalAttendance = () => {
   useEffect(() => {
     const fetchSubjectData = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/subject/getSubject");
+        const response = await axios.get(`${baseApiURL()}/subject/getSubject`);
         if (response.data && response.data.success) {
           const subjectData = response.data.subject.reduce((acc, item) => {
             acc[item.name] = item.total;
