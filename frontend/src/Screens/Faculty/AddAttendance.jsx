@@ -20,9 +20,54 @@ const AddAttendance = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
-  
 
-  // Fetch branch data
+  // ✅ FIX 1: Moved up and wrapped in useCallback
+  const filterSubjectsBySemester = useCallback((selectedSemester, subjectsList = subjects) => {
+    if (selectedSemester === "-- Select --" || selectedBranch === "-- Select --") {
+      setFilteredSubjects([]);
+      setSelectedSubject("-- Select --");
+      setSelectedSubjectId(null);
+      setTotalClasses("");
+      return;
+    }
+
+    const semesterSubjects = subjectsList.filter(
+      (subject) =>
+        String(subject.semester) === String(selectedSemester) &&
+        subject.branch?.name === selectedBranch
+    );
+    setFilteredSubjects(semesterSubjects);
+    setSelectedSubject("-- Select --");
+    setSelectedSubjectId(null);
+    setTotalClasses("");
+  }, [selectedBranch, subjects]);
+
+  // ✅ FIX 2: Moved up
+  const filterStudents = useCallback(() => {
+    let filtered = students;
+
+    if (selectedBranch && selectedBranch !== "-- Select --") {
+      filtered = filtered.filter(
+        (student) => student.branch.toLowerCase() === selectedBranch.toLowerCase()
+      );
+    }
+
+    if (semester && semester !== "-- Select --") {
+      filtered = filtered.filter((student) => String(student.semester) === semester);
+    }
+
+    if (range.start && range.end) {
+      filtered = filtered.filter(
+        (student) =>
+          student.enrollmentNo >= Number(range.start) &&
+          student.enrollmentNo <= Number(range.end)
+      );
+    }
+
+    filtered.sort((a, b) => a.enrollmentNo - b.enrollmentNo);
+    setFilteredStudents(filtered);
+  }, [students, selectedBranch, semester, range]);
+
   const getBranchData = () => {
     axios
       .get(`${baseApiURL()}/branch/getBranch`)
@@ -39,69 +84,44 @@ const AddAttendance = () => {
       });
   };
 
-// Wrap getSubjectData in useCallback
-const getSubjectData = useCallback(() => {
-  setLoading(true);
-  toast.loading("Loading Subjects");
-  axios
-    .get(`${baseApiURL()}/subject/getSubject`)
-    .then((response) => {
-      toast.dismiss();
-      setLoading(false);
-      if (response.data.success) {
-        setSubjects(response.data.subject);
-        filterSubjectsBySemester(semester, response.data.subject);
-      } else {
-        toast.error(response.data.message);
-      }
-    })
-    .catch((error) => {
-      toast.dismiss();
-      setLoading(false);
-      toast.error(error.message);
-    });
-}, [semester]);
+  const getSubjectData = useCallback(() => {
+    setLoading(true);
+    toast.loading("Loading Subjects");
+    axios
+      .get(`${baseApiURL()}/subject/getSubject`)
+      .then((response) => {
+        toast.dismiss();
+        setLoading(false);
+        if (response.data.success) {
+          setSubjects(response.data.subject);
+          filterSubjectsBySemester(semester, response.data.subject); // safe now
+        } else {
+          toast.error(response.data.message);
+        }
+      })
+      .catch((error) => {
+        toast.dismiss();
+        setLoading(false);
+        toast.error(error.message);
+      });
+  }, [semester, filterSubjectsBySemester]);
 
-  // Function to filter subjects based on semester and branch
-  const filterSubjectsBySemester = (selectedSemester, subjectsList = subjects) => {
-    if (selectedSemester === "-- Select --" || selectedBranch === "-- Select --") {
-      setFilteredSubjects([]);
-      setSelectedSubject("-- Select --");
-      setSelectedSubjectId(null);
-      setTotalClasses("");
-      return;
-    }
-
-    const semesterSubjects = subjectsList.filter(
-      (subject) => 
-        String(subject.semester) === String(selectedSemester) &&
-        subject.branch?.name === selectedBranch
-    );
-    setFilteredSubjects(semesterSubjects);
-    setSelectedSubject("-- Select --");
-    setSelectedSubjectId(null);
-    setTotalClasses("");
-  };
-
-  // Handle semester change
   const handleSemesterChange = (e) => {
     const newSemester = e.target.value;
     setSemester(newSemester);
     filterSubjectsBySemester(newSemester);
   };
 
-  // Handle branch change
   const handleBranchChange = (e) => {
     const newBranch = e.target.value;
     setSelectedBranch(newBranch);
     filterSubjectsBySemester(semester);
   };
 
-  // Handle subject change
   const handleSubjectChange = (e) => {
     const selectedValue = e.target.value;
     setSelectedSubject(selectedValue);
-    
+
     if (selectedValue === "-- Select --") {
       setSelectedSubjectId(null);
       setTotalClasses("");
@@ -118,7 +138,6 @@ const getSubjectData = useCallback(() => {
     }
   };
 
-  // Replace the updateTotalClasses function to accept a value
   const updateTotalClasses = (newTotal) => {
     if (!selectedSubjectId || newTotal === undefined) {
       toast.error("Please select a subject and enter total classes");
@@ -156,7 +175,6 @@ const getSubjectData = useCallback(() => {
       });
   };
 
-  // Fetch student data
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -178,42 +196,18 @@ const getSubjectData = useCallback(() => {
     fetchStudents();
   }, []);
 
-  // Initial data fetch
-useEffect(() => {
-  getBranchData();
-  getSubjectData();
-}, [getSubjectData]);
+  useEffect(() => {
+    getBranchData();
+    getSubjectData();
+  }, [getSubjectData]);
 
-  // Filter students based on filters
-useEffect(() => {
-  filterStudents();
-}, [filterStudents]);
+  useEffect(() => {
+    filterStudents();
+  }, [filterStudents]);
 
-  // Wrap filterStudents in useCallback
-const filterStudents = useCallback(() => {
-  let filtered = students;
+  // ... everything else in your component remains unchanged ...
 
-  if (selectedBranch && selectedBranch !== "-- Select --") {
-    filtered = filtered.filter(
-      (student) => student.branch.toLowerCase() === selectedBranch.toLowerCase()
-    );
-  }
-
-  if (semester && semester !== "-- Select --") {
-    filtered = filtered.filter((student) => String(student.semester) === semester);
-  }
-
-  if (range.start && range.end) {
-    filtered = filtered.filter(
-      (student) =>
-        student.enrollmentNo >= Number(range.start) &&
-        student.enrollmentNo <= Number(range.end)
-    );
-  }
-
-  filtered.sort((a, b) => a.enrollmentNo - b.enrollmentNo);
-  setFilteredStudents(filtered);
-}, [students, selectedBranch, semester, range]);
+  
 
   // Toggle individual attendance - FIXED VERSION
   const toggleAttendance = (student) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { baseApiURL } from "../../baseUrl";
 import DatePicker from "react-datepicker";
@@ -29,36 +29,38 @@ const ViewAttendenceByDate = () => {
     fetchSubjects();
   }, []);
 
-  const fetchAttendanceByDate = async () => {
-    try {
-      setLoading(true);
-      let url = `${baseApiURL()}/attendence/getByDate`;
-      
-      const params = new URLSearchParams();
-      if (selectedSubject) params.append('subject', selectedSubject);
-      if (startDate) params.append('startDate', startDate.toISOString());
-      if (endDate) params.append('endDate', endDate.toISOString());
-      
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
+  const fetchAttendanceByDate = useCallback(async () => {
+  try {
+    setLoading(true);
+    let url = `${baseApiURL()}/attendence/getByDate`;
 
-      const response = await axios.get(url);
-      if (response.data.success) {
-        setAttendanceRecords(response.data.attendance);
-      } else {
-        setError(response.data.message);
-      }
-    } catch (err) {
-      setError("Failed to fetch attendance records. Please try again.");
-    } finally {
-      setLoading(false);
+    const params = new URLSearchParams();
+    if (selectedSubject) params.append("subject", selectedSubject);
+    if (startDate) params.append("startDate", startDate.toISOString());
+    if (endDate) params.append("endDate", endDate.toISOString());
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
     }
-  };
+
+    const response = await axios.get(url);
+    if (response.data.success) {
+      setAttendanceRecords(response.data.attendance);
+    } else {
+      setError(response.data.message);
+    }
+  } catch (err) {
+    setError("Failed to fetch attendance records. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+}, [selectedSubject, startDate, endDate]);
+
 
   useEffect(() => {
-    fetchAttendanceByDate();
-  }, [selectedSubject, startDate, endDate]);
+  fetchAttendanceByDate();
+}, [fetchAttendanceByDate]);
+
 
   const handleDeleteAttendance = async (id) => {
     if (window.confirm("Are you sure you want to delete this attendance record?")) {

@@ -119,21 +119,29 @@ const Marks = () => {
 
   // Filter subjects when branch or semester changes
   useEffect(() => {
-    if (selected.branch !== "-- Select --" && selected.semester !== "-- Select --" && subject && subject.length > 0) {
-      const filtered = subject.filter(
-        (subject) => 
-          subject.semester === parseInt(selected.semester) && 
-          subject.branch?.name === selected.branch
-      );
-      setFilteredSubjects(filtered);
-      // Reset subject selection if current subject is not in filtered list
-      if (selected.subject !== "-- Select --" && !filtered.find(s => s.name === selected.subject)) {
-        setSelected(prev => ({ ...prev, subject: "-- Select --" }));
-      }
-    } else {
-      setFilteredSubjects(subject || []);
+  if (
+    selected.branch !== "-- Select --" &&
+    selected.semester !== "-- Select --" &&
+    subject &&
+    subject.length > 0
+  ) {
+    const filtered = subject.filter(
+      (subject) =>
+        subject.semester === parseInt(selected.semester) &&
+        subject.branch?.name === selected.branch
+    );
+    setFilteredSubjects(filtered);
+    if (
+      selected.subject !== "-- Select --" &&
+      !filtered.find((s) => s.name === selected.subject)
+    ) {
+      setSelected((prev) => ({ ...prev, subject: "-- Select --" }));
     }
-  }, [selected.branch, selected.semester, subject]);
+  } else {
+    setFilteredSubjects(subject || []);
+  }
+}, [selected.branch, selected.semester, selected.subject, subject]); // ✅ Fixed!
+
 
   useEffect(() => {
     getBranchData();
