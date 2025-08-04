@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { baseApiURL } from "../../../baseUrl";
 import toast from "react-hot-toast";
-import { FiDownload, FiFilter, FiUsers, FiSearch } from "react-icons/fi";
+import { FiDownload, FiUsers, FiSearch } from "react-icons/fi";
 
 const ViewStudents = () => {
   const [students, setStudents] = useState([]);

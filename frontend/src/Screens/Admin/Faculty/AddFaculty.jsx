@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { baseApiURL } from "../../../baseUrl";
-import { FiUpload, FiUser, FiMail, FiPhone, FiBook, FiBriefcase, FiCreditCard } from "react-icons/fi";
+import { FiUpload, FiUser, FiBriefcase, FiCreditCard } from "react-icons/fi";
+
 
 const AddFaculty = () => {
   const [file, setFile] = useState();

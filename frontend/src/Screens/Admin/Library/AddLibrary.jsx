@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { baseApiURL } from "../../../baseUrl";
-import { FiUser, FiMail, FiPhone, FiBook } from "react-icons/fi";
+import { FiUser, FiMail, FiBook } from "react-icons/fi";
 
 const AddLibrary = () => {
     const [data, setData] = useState({

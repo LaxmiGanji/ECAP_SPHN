@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { MdOutlineDelete, MdEdit } from "react-icons/md";
 import { baseApiURL } from "../../baseUrl";
-import { FiBook, FiHash, FiCalendar, FiUsers, FiGitBranch } from "react-icons/fi";
+import { FiBook, FiCalendar, FiUsers, FiGitBranch } from "react-icons/fi";
 
 const Subjects = () => {
   const [data, setData] = useState({ 

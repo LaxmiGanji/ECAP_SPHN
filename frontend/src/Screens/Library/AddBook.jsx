@@ -4,7 +4,7 @@ import { baseApiURL } from "../../baseUrl";
 import { toast } from "react-hot-toast";
 import Heading from "../../components/Heading";
 import { MdOutlineDelete, MdEdit } from "react-icons/md";
-import { FiBook, FiUser, FiTag, FiHash } from "react-icons/fi";
+import { FiBook } from "react-icons/fi";
 
 const AddBook = () => {
   const [data, setData] = useState({

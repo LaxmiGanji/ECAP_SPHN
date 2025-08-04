@@ -3,7 +3,7 @@ import AddStudent from "./Student/AddStudent";
 import EditStudent from "./Student/EditStudent";
 import ViewStudents from "./Student/ViewStudents";
 import ImportStudent from "./Student/ImportStudent";
-import { FiUsers, FiUserPlus, FiEdit, FiEye, FiDownload } from "react-icons/fi";
+import { FiUserPlus, FiEdit, FiEye, FiDownload } from "react-icons/fi";
 
 const Student = () => {
   const [selected, setSelected] = useState("add");

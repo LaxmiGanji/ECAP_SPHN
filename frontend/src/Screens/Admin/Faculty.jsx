@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import EditFaculty from "./Faculty/EditFaculty";
 import AddFaculty from "./Faculty/AddFaculty";
 import ViewFaculty from "./Faculty/ViewFaculty";
-import DownloadFaculty from "./Faculty/ImportFaculty";
 import ImportFaculty from "./Faculty/ImportFaculty";
-import { FiBriefcase, FiUserPlus, FiEdit, FiEye, FiDownload } from "react-icons/fi";
+import { FiUserPlus, FiEdit, FiEye, FiDownload } from "react-icons/fi";
 
 const Faculty = () => {
   const [selected, setSelected] = useState("add");

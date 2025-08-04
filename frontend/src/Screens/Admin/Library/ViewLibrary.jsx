@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { baseApiURL } from "../../../baseUrl";
 import toast from "react-hot-toast";
-import { FiBook, FiSearch, FiDownload, FiUsers } from "react-icons/fi";
+import { FiBook, FiSearch, FiDownload } from "react-icons/fi";
 import * as XLSX from "xlsx";
 
 const ViewLibrary = () => {
