@@ -125,14 +125,15 @@ const ImportFaculty = () => {
         const batch = jsonData.slice(i, i + batchSize);
         const batchResults = await processBatch(batch, i + 2); // +2 for header row and 1-based index
         
-        batchResults.forEach(result => {
-          if (result.success) {
-            successCount++;
-          } else {
-            errorCount++;
-            errorMessages.push(`Row ${result.index}: ${result.employeeId} - ${result.message}`);
-          }
-        });
+        for (let j = 0; j < batchResults.length; j++) {
+  const result = batchResults[j];
+  if (result.success) {
+    successCount++;
+  } else {
+    errorCount++;
+    errorMessages.push(`Row ${result.index}: ${result.employeeId} - ${result.message}`);
+  }
+}
 
         // Update progress
         const currentBatch = Math.ceil((i + batchSize) / batchSize);

@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import debounce from "lodash/debounce";
 import { baseApiURL } from "../../baseUrl";
+import { useMemo } from "react"; // also import useMemo
 
 const StudentData = () => {
   const [studentQuery, setStudentQuery] = useState("");
@@ -19,68 +20,67 @@ const StudentData = () => {
   const [studentsWithBook, setStudentsWithBook] = useState([]);
   const [showBookCheck, setShowBookCheck] = useState(false);
 
-  // Debounced Student Search
-  const fetchStudents = useCallback(
-    debounce(async (query) => {
-      if (!query) return setStudentResults([]);
-      try {
-        const res = await axios.get(`${baseApiURL()}/student/details/search?query=${query}`);
-        setStudentResults(res.data.students || []);
-      } catch (err) {
-        console.error(err);
-      }
-    }, 300),
-    []
-  );
+
+
+const fetchStudents = useMemo(() =>
+  debounce(async (query) => {
+    if (!query) return setStudentResults([]);
+    try {
+      const res = await axios.get(`${baseApiURL()}/student/details/search?query=${query}`);
+      setStudentResults(res.data.students || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }, 300), []
+);
+
 
   // Debounced Book Search
-  const fetchBooks = useCallback(
-    debounce(async (query) => {
-      if (!query) return setBookResults([]);
-      try {
-        const res = await axios.get(`${baseApiURL()}/library/search`, {
-          params: { query }
-        });
-        setBookResults(res.data.books || []);
-      } catch (err) {
-        console.error(err);
-      }
-    }, 300),
-    []
-  );
+  const fetchBooks = useMemo(() =>
+  debounce(async (query) => {
+    if (!query) return setBookResults([]);
+    try {
+      const res = await axios.get(`${baseApiURL()}/library/search`, {
+        params: { query }
+      });
+      setBookResults(res.data.books || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }, 300), []
+);
+
 
   // New debounced book borrower search
-  const checkBookBorrowers = useCallback(
-    debounce(async (query) => {
-      if (!query) {
-        setBookCheckResults([]);
-        setStudentsWithBook([]);
-        return;
-      }
-      try {
-        // First search for matching books
-        const bookRes = await axios.get(`${baseApiURL()}/library/search`, {
-          params: { query }
-        });
-        setBookCheckResults(bookRes.data.books || []);
+  const checkBookBorrowers = useMemo(() =>
+  debounce(async (query) => {
+    if (!query) {
+      setBookCheckResults([]);
+      setStudentsWithBook([]);
+      return;
+    }
+    try {
+      const bookRes = await axios.get(`${baseApiURL()}/library/search`, {
+        params: { query }
+      });
+      setBookCheckResults(bookRes.data.books || []);
 
-        // If we found books, check who has them
-        if (bookRes.data.books?.length > 0) {
-          const bookId = bookRes.data.books[0]._id;
-          const studentsRes = await axios.get(`${baseApiURL()}/student/details/findByBook`, {
-            params: { bookId }
-          });
-          setStudentsWithBook(studentsRes.data.students || []);
-        } else {
-          setStudentsWithBook([]);
-        }
-      } catch (err) {
-        console.error(err);
+      if (bookRes.data.books?.length > 0) {
+        const bookId = bookRes.data.books[0]._id;
+        const studentsRes = await axios.get(`${baseApiURL()}/student/details/findByBook`, {
+          params: { bookId }
+        });
+        setStudentsWithBook(studentsRes.data.students || []);
+      } else {
         setStudentsWithBook([]);
       }
-    }, 500),
-    []
-  );
+    } catch (err) {
+      console.error(err);
+      setStudentsWithBook([]);
+    }
+  }, 500), []
+);
+
 
   // Load student's issued books when selected student changes
   useEffect(() => {

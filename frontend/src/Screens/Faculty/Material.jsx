@@ -56,22 +56,28 @@ const Material = () => {
   }, []);
 
   // Filter subjects when branch or semester changes
-  useEffect(() => {
-    if (selected.branch && selected.semester) {
-      const filtered = allSubjects.filter(
-        (subject) => 
-          subject.semester === parseInt(selected.semester) && 
-          subject.branch?.name === selected.branch
-      );
-      setFilteredSubjects(filtered);
-      // Reset subject selection if current subject is not in filtered list
-      if (selected.subject && !filtered.find(s => s.name === selected.subject)) {
-        setSelected(prev => ({ ...prev, subject: "" }));
-      }
-    } else {
-      setFilteredSubjects(allSubjects);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => {
+  if (selected.branch && selected.semester) {
+    const filtered = allSubjects.filter(
+      (subject) =>
+        subject.semester === parseInt(selected.semester) &&
+        subject.branch?.name === selected.branch
+    );
+    setFilteredSubjects(filtered);
+
+    if (
+      selected.subject &&
+      !filtered.find((s) => s.name === selected.subject)
+    ) {
+      setSelected((prev) => ({ ...prev, subject: "" }));
     }
-  }, [selected.branch, selected.semester, allSubjects]);
+  } else {
+    setFilteredSubjects(allSubjects);
+  }
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [selected.branch, selected.semester, allSubjects]);
+
 
   // Add material handler
   const addMaterialHandler = () => {

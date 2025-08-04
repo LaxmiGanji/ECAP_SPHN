@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { baseApiURL } from "../../baseUrl";
 import toast from "react-hot-toast";
@@ -20,6 +20,7 @@ const AddAttendance = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
+  
 
   // Fetch branch data
   const getBranchData = () => {
@@ -38,28 +39,28 @@ const AddAttendance = () => {
       });
   };
 
-  // Fetch subject data
-  const getSubjectData = () => {
-    setLoading(true);
-    toast.loading("Loading Subjects");
-    axios
-      .get(`${baseApiURL()}/subject/getSubject`)
-      .then((response) => {
-        toast.dismiss();
-        setLoading(false);
-        if (response.data.success) {
-          setSubjects(response.data.subject);
-          filterSubjectsBySemester(semester, response.data.subject);
-        } else {
-          toast.error(response.data.message);
-        }
-      })
-      .catch((error) => {
-        toast.dismiss();
-        setLoading(false);
-        toast.error(error.message);
-      });
-  };
+// Wrap getSubjectData in useCallback
+const getSubjectData = useCallback(() => {
+  setLoading(true);
+  toast.loading("Loading Subjects");
+  axios
+    .get(`${baseApiURL()}/subject/getSubject`)
+    .then((response) => {
+      toast.dismiss();
+      setLoading(false);
+      if (response.data.success) {
+        setSubjects(response.data.subject);
+        filterSubjectsBySemester(semester, response.data.subject);
+      } else {
+        toast.error(response.data.message);
+      }
+    })
+    .catch((error) => {
+      toast.dismiss();
+      setLoading(false);
+      toast.error(error.message);
+    });
+}, [semester]);
 
   // Function to filter subjects based on semester and branch
   const filterSubjectsBySemester = (selectedSemester, subjectsList = subjects) => {
@@ -178,40 +179,41 @@ const AddAttendance = () => {
   }, []);
 
   // Initial data fetch
-  useEffect(() => {
-    getBranchData();
-    getSubjectData();
-  }, []);
+useEffect(() => {
+  getBranchData();
+  getSubjectData();
+}, [getSubjectData]);
 
   // Filter students based on filters
-  useEffect(() => {
-    filterStudents();
-  }, [students, selectedBranch, semester, range]);
+useEffect(() => {
+  filterStudents();
+}, [filterStudents]);
 
-  const filterStudents = () => {
-    let filtered = students;
+  // Wrap filterStudents in useCallback
+const filterStudents = useCallback(() => {
+  let filtered = students;
 
-    if (selectedBranch && selectedBranch !== "-- Select --") {
-      filtered = filtered.filter(
-        (student) => student.branch.toLowerCase() === selectedBranch.toLowerCase()
-      );
-    }
+  if (selectedBranch && selectedBranch !== "-- Select --") {
+    filtered = filtered.filter(
+      (student) => student.branch.toLowerCase() === selectedBranch.toLowerCase()
+    );
+  }
 
-    if (semester && semester !== "-- Select --") {
-      filtered = filtered.filter((student) => String(student.semester) === semester);
-    }
+  if (semester && semester !== "-- Select --") {
+    filtered = filtered.filter((student) => String(student.semester) === semester);
+  }
 
-    if (range.start && range.end) {
-      filtered = filtered.filter(
-        (student) =>
-          student.enrollmentNo >= Number(range.start) &&
-          student.enrollmentNo <= Number(range.end)
-      );
-    }
+  if (range.start && range.end) {
+    filtered = filtered.filter(
+      (student) =>
+        student.enrollmentNo >= Number(range.start) &&
+        student.enrollmentNo <= Number(range.end)
+    );
+  }
 
-    filtered.sort((a, b) => a.enrollmentNo - b.enrollmentNo);
-    setFilteredStudents(filtered);
-  };
+  filtered.sort((a, b) => a.enrollmentNo - b.enrollmentNo);
+  setFilteredStudents(filtered);
+}, [students, selectedBranch, semester, range]);
 
   // Toggle individual attendance - FIXED VERSION
   const toggleAttendance = (student) => {
