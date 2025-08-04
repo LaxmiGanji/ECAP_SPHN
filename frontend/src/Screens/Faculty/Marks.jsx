@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Heading from "../../components/Heading";
 import toast from "react-hot-toast";
 import { BiArrowBack } from "react-icons/bi";

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import Heading from "../../components/Heading";
 import axios from "axios";
 import { baseApiURL } from "../../baseUrl";
 import { FiSearch, FiUser, FiMail, FiPhone, FiBook, FiCalendar, FiAward } from "react-icons/fi";

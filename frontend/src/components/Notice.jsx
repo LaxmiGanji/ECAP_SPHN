@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { IoMdLink } from "react-icons/io";
 import { HiOutlineCalendar } from "react-icons/hi";
 import { useLocation } from "react-router-dom";
 import { IoAddOutline } from "react-icons/io5";
 import { MdDeleteOutline, MdEditNote, MdClose } from "react-icons/md";
-import { BiArrowBack } from "react-icons/bi";
 import toast from "react-hot-toast";
 import { baseApiURL } from "../baseUrl";
 

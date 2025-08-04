@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Heading from "../../components/Heading";
 import AddCertification from "./AddCertification";
 import EditCertification from "./EditCertification";

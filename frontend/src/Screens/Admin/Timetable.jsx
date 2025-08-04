@@ -1,6 +1,5 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
-import Heading from "../../components/Heading";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { baseApiURL } from "../../baseUrl";
 import ViewTimetable from "../Common/ViewTimetable";

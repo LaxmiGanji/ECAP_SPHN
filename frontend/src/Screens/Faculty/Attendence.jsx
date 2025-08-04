@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import AddAttendance from "./AddAttendance";
 import ViewTotalAttendance from "./ViewTotalAttendance";
 import ViewAttendenceByDate from "./ViewAttendenceByDate";

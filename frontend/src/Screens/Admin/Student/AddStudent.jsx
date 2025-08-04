@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { baseApiURL } from "../../../baseUrl";
-import { FiUpload, FiUser, FiMail, FiPhone, FiBook, FiUsers } from "react-icons/fi";
+import { FiUpload, FiUser, FiBook, FiUsers } from "react-icons/fi";
 
 const AddStudent = () => {
   const [file, setFile] = useState();

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { FaQrcode } from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
 

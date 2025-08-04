@@ -1,5 +1,4 @@
-import React from "react";
-import Heading from "../../components/Heading";
+
 import ViewTimetable from "../Common/ViewTimetable";
 
 const Timetable = () => {

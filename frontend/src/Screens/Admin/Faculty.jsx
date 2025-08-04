@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import EditFaculty from "./Faculty/EditFaculty";
 import AddFaculty from "./Faculty/AddFaculty";
 import ViewFaculty from "./Faculty/ViewFaculty";

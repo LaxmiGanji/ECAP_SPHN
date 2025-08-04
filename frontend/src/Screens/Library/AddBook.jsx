@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from "axios";
 import { baseApiURL } from "../../baseUrl";
 import { toast } from "react-hot-toast";
-import Heading from "../../components/Heading";
 import { MdOutlineDelete, MdEdit } from "react-icons/md";
 import { FiBook } from "react-icons/fi";
 

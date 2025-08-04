@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import EditAdmin from "./Admin/EditAdmin";
 import AddAdmin from "./Admin/AddAdmin";
 

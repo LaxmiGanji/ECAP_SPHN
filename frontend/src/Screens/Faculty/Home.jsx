@@ -1,12 +1,11 @@
 //Home.jsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Sidebar from "../../components/Sidebar";
 import Notice from "../../components/Notice";
 import Profile from "./Profile";
 import Timetable from "./Timetable";
-import ViewTimetable from "../Common/ViewTimetable";
 import { Toaster } from "react-hot-toast";
 import Material from "./Material";
 import Marks from "./Marks";

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import AddAttendance from "../Faculty/AddAttendance";
 import ViewTotalAttendance from "../Faculty/ViewTotalAttendance";
 import { FiUserCheck, FiEye } from "react-icons/fi";
