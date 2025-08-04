@@ -5,10 +5,12 @@ const app = express();
 const path = require("path")
 connectToMongo();
 const port = 5000 || process.env.PORT;
-var cors = require("cors");
+
+const cors = require("cors");
 
 app.use(cors({
-  origin: process.env.FRONTEND_API_LINK
+  origin: "https://ecap-sphn-frontend.onrender.com", // Replace with your actual frontend URL
+  credentials: true
 }));
 
 app.use(express.json()); //to convert request data to json
