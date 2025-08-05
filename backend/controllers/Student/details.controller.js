@@ -70,20 +70,38 @@ const addDetails = async (req, res) => {
 
 const updateDetails = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    if (!id || id.length !== 24) {
+      return res.status(400).json({ success: false, message: "Invalid or missing student ID" });
+    }
+
     const { phoneNumber } = req.body;
     if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
       return res.status(400).json({ success: false, message: "Invalid phone number. Must be 10 digits starting with 6-9." });
     }
-    const updateData = req.file ? { ...req.body, profile: req.file.filename } : req.body;
-    const user = await studentDetails.findByIdAndUpdate(req.params.id, updateData);
-    if (!user) {
-      return res.status(400).json({ success: false, message: "No Student Found" });
+
+    const updateData = req.file
+      ? { ...req.body, profile: req.file.filename }
+      : req.body;
+
+    const updatedStudent = await studentDetails.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedStudent) {
+      return res.status(404).json({ success: false, message: "No Student Found" });
     }
-    res.json({ success: true, message: "Updated Successfully!" });
+
+    return res.json({ success: true, message: "Updated Successfully!", user: updatedStudent });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("Update Error:", error); // 🔍 Add logging to see actual issue in logs
+    return res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
   }
 };
+
 
 const updateDetails2 = async (req, res) => {
   try {
