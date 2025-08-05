@@ -70,34 +70,47 @@ const addDetails = async (req, res) => {
 
 const updateDetails = async (req, res) => {
   try {
-    // Debug log to verify incoming request
-    console.log("REQ.PARAMS.ID:", req.params.id);
-    console.log("REQ.BODY:", req.body);
-    console.log("REQ.FILE:", req.file);
+    const { phoneNumber } = req.body;
+
+    console.log("Incoming body:", req.body);
+    console.log("Incoming file:", req.file);
+    console.log("Updating student with ID:", req.params.id);
+
+    // Validate phone if sent
+    if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid phone number. Must be 10 digits starting with 6-9.",
+      });
+    }
 
     const updateData = req.file
       ? { ...req.body, profile: req.file.filename }
       : req.body;
 
-    const user = await studentDetails.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-      runValidators: true,
-    });
+    const user = await studentDetails.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "Student Not Found" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No Student Found" });
     }
 
-    return res.json({ success: true, message: "Updated Successfully!", user });
+    res.json({ success: true, message: "Updated Successfully!", user });
   } catch (error) {
-    console.error("Update Error:", error);
-    return res.status(500).json({
+    console.error("Error updating student:", error);
+    res.status(500).json({
       success: false,
       message: "Internal Server Error",
       error: error.message,
     });
   }
 };
+
 
 
 const updateDetails2 = async (req, res) => {
