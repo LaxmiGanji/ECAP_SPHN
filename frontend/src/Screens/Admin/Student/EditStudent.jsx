@@ -79,8 +79,8 @@ const EditStudent = () => {
     const headers = {
       "Content-Type": "multipart/form-data",
     };
-    axios
-      .put(`${baseApiURL()}/student/details/updateDetails/${id}`, formData, {
+    axios.put(`${baseApiURL()}/student/details/updateDetails2/${data.enrollmentNo}`, formData, {
+
         headers: headers,
       })
       .then((response) => {
