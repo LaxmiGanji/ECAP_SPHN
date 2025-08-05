@@ -565,7 +565,7 @@ const AddAttendance = () => {
                   {student.enrollmentNo}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
-                  {student.firstName} {student.lastName}
+                  {student.firstName} {student.middleName} {student.lastName}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">{student.branch}</td>
                 <td className="border border-gray-300 px-4 py-2">{student.semester}</td>
