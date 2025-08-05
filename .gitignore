@@ -4,10 +4,6 @@ backend/node_modules/
 frontend/node_modules/
 
 
-# Media and uploads (large files)
-backend/media/
-!backend/media/.keep
-
 # Logs
 *.log
 npm-debug.log*
