@@ -40,7 +40,8 @@ const Sidebar = ({ selectedMenu, setSelectedMenu, userType }) => {
           { id: "Timetable", label: "Timetable", icon: FiCalendar, color: "from-orange-500 to-orange-600" },
           { id: "Notice", label: "Notice", icon: FiFileText, color: "from-pink-500 to-pink-600" },
           { id: "Material", label: "Material", icon: FiBookOpen, color: "from-teal-500 to-teal-600" },
-          { id: "Attendence", label: "Attendance", icon: FiGrid, color: "from-red-500 to-red-600" }
+          { id: "Attendence", label: "Attendance", icon: FiGrid, color: "from-red-500 to-red-600" },
+          { id: "Edit Faculty", label: "Edit Faculty", icon: FiGrid, color: "from-red-500 to-red-600" }
         ];
       case "Student":
         return [

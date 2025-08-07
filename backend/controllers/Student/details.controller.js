@@ -70,46 +70,32 @@ const addDetails = async (req, res) => {
 
 const updateDetails = async (req, res) => {
   try {
-    const { phoneNumber } = req.body;
-
-    console.log("Incoming body:", req.body);
-    console.log("Incoming file:", req.file);
-    console.log("Updating student with ID:", req.params.id);
-
-    // Validate phone if sent
-    if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid phone number. Must be 10 digits starting with 6-9.",
-      });
-    }
-
-    const updateData = req.file
-      ? { ...req.body, profile: req.file.filename }
-      : req.body;
-
-    const user = await studentDetails.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No Student Found" });
-    }
-
-    res.json({ success: true, message: "Updated Successfully!", user });
+      const { phoneNumber, email } = req.body;
+      if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
+          return res.status(400).json({ success: false, message: "Invalid phone number. Must be 10 digits starting with 6-9." });
+      }
+      let user;
+      if (req.file) {
+          user = await studentDetails.findByIdAndUpdate(req.params.id, { ...req.body, profile: req.file.filename });
+      } else {
+          user = await studentDetails.findByIdAndUpdate(req.params.id, req.body);
+      }
+      if (!user) {
+          return res.status(400).json({
+              success: false,
+              message: "No Student Found",
+          });
+      }
+      const data = {
+          success: true,
+          message: "Updated Successfull!",
+      };
+      res.json(data);
   } catch (error) {
-    console.error("Error updating student:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-      error: error.message,
-    });
+      console.log(error)
+      res.status(500).json({ success: false, message: "Internal Server Error" });
   }
-};
+}
 
 
 
