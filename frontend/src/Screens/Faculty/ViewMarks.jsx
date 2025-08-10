@@ -199,7 +199,7 @@ const ViewMarks = ({ setShowViewMarks }) => {
                           rowSpan={allSubjects.length}
                           className="border border-gray-300 p-2"
                         >
-                          {student.firstName} {student.lastName}
+                          {student.firstName} {student.middleName} {student.lastName}
                         </td>
                       </>
                     )}
