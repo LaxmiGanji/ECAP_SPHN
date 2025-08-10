@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ViewAttendance from "./ViewAttendance";
 import Certifications from "./Certifications";
 import Fees from "./Fees";
+import EditStudent from "./EditStudent";
 
 const Home = () => {
   const [selectedMenu, setSelectedMenu] = useState("My Profile");
@@ -43,6 +44,8 @@ const Home = () => {
         return <Certifications />;
       case "Fees":
         return <Fees />;
+      case "Edit Student":
+        return <EditStudent/>
       default:
         return <Profile />;
     }

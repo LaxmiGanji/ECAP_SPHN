@@ -11,7 +11,7 @@ import Material from "./Material";
 import Marks from "./Marks";
 import Student from "./Student";
 import Attendence from "./Attendence";
-import EditFaculty from "../Admin/Faculty/EditFaculty";
+import EditFaculty from "./EditFaculty";
 
 const Home = () => {
   const router = useLocation();
