@@ -52,7 +52,8 @@ const Sidebar = ({ selectedMenu, setSelectedMenu, userType }) => {
           { id: "Notice", label: "Notice", icon: FiFileText, color: "from-pink-500 to-pink-600" },
           { id: "ViewAttendance", label: "View Attendance", icon: FiGrid, color: "from-teal-500 to-teal-600" },
           { id: "Certifications", label: "Certifications", icon: FiFileText, color: "from-red-500 to-red-600" },
-          { id: "Fees", label: "Fees", icon: FiFileText, color: "from-yellow-500 to-yellow-600" }
+          { id: "Fees", label: "Fees", icon: FiFileText, color: "from-yellow-500 to-yellow-600" },
+          { id: "Edit Student", label: "Edit Student", icon: FiGrid, color: "from-red-500 to-red-600" }
         ];
       default:
         return [];

@@ -8,7 +8,7 @@ const studentDetails = new mongoose.Schema({
   },
   firstName: {
     type: String,
-    required: true,
+    required: false,
   },
   middleName: {
     type: String,
@@ -16,11 +16,11 @@ const studentDetails = new mongoose.Schema({
   },
   lastName: {
     type: String,
-    required: false,
+    required: true,
   },
   email: {
     type: String,
-    required: false,
+    required: true,
   },
   phoneNumber: {
     type: Number,

@@ -1,7 +1,7 @@
 //student/details.controller.js
 const studentDetails = require("../../models/Students/details.model.js");
 const Library = require("../../models/Other/library.model.js");
-const { validatePhoneNumber } = require("../../utils/validation.js");
+const { validatePhoneNumber, validateEmail } = require("../../utils/validation.js");
 
 const getDetails = async (req, res) => {
   try {
@@ -74,6 +74,9 @@ const updateDetails = async (req, res) => {
       if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
           return res.status(400).json({ success: false, message: "Invalid phone number. Must be 10 digits starting with 6-9." });
       }
+      if (email && !validateEmail(email)) {
+        return res.status(400).json({ success: false, message: "Invalid email format." });
+    }
       let user;
       if (req.file) {
           user = await studentDetails.findByIdAndUpdate(req.params.id, { ...req.body, profile: req.file.filename });
