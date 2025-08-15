@@ -15,7 +15,7 @@ const facultyDetails = new mongoose.Schema({
   },
   lastName: {
     type: String,
-    required: true,
+    required: false,
   },
   email: {
     type: String,
@@ -39,19 +39,19 @@ const facultyDetails = new mongoose.Schema({
   },
   post: {
     type: String,
-    required: true,
+    required: false,
   },
   panCard: {
     type: String,
-    required: true,
+    required: false,
   },
   jntuId: {
     type: String,
-    required: true,
+    required: false,
   },
   aicteId: {
     type: String,
-    required: true,
+    required: false,
   },
   profile: {
     type: String,
