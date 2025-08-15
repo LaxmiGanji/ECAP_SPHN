@@ -136,7 +136,7 @@ const Sidebar = ({ selectedMenu, setSelectedMenu, userType }) => {
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-700">Sphoorthy</p>
-                <p className="text-xs text-gray-500">Management System</p>
+                <p className="text-xs text-gray-500">Educational College Automation Package</p>
               </div>
             </div>
           </div>
