@@ -1,5 +1,5 @@
 const facultyDetails = require("../../models/Faculty/details.model.js")
-const { validatePhoneNumber, validateEmail } = require("../../utils/validation.js");
+const { validatePhoneNumber } = require("../../utils/validation.js");
 
 const getDetails = async (req, res) => {
     try {
@@ -28,10 +28,6 @@ const addDetails = async (req, res) => {
   
       if (!validatePhoneNumber(phoneNumber)) {
         return res.status(400).json({ success: false, message: "Invalid phone number. Must be 10 digits starting with 6-9." });
-      }
-      
-      if (!validateEmail(email)) {
-        return res.status(400).json({ success: false, message: "Invalid email format." });
       }
   
       let user = await facultyDetails.findOne({ employeeId: data.employeeId });
@@ -66,9 +62,6 @@ const updateDetails = async (req, res) => {
         const { phoneNumber, email } = req.body;
         if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
             return res.status(400).json({ success: false, message: "Invalid phone number. Must be 10 digits starting with 6-9." });
-        }
-        if (email && !validateEmail(email)) {
-            return res.status(400).json({ success: false, message: "Invalid email format." });
         }
         let user;
         if (req.file) {
