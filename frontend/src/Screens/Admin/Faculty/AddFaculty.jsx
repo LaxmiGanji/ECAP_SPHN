@@ -144,7 +144,7 @@ const AddFaculty = () => {
                     <input
                       type="text"
                       id="firstname"
-                      required
+                    
                       value={data.firstName}
                       onChange={(e) => setData({ ...data, firstName: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
@@ -171,7 +171,7 @@ const AddFaculty = () => {
                     <input
                       type="text"
                       id="lastname"
-                      required
+                     
                       value={data.lastName}
                       onChange={(e) => setData({ ...data, lastName: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
@@ -273,7 +273,6 @@ const AddFaculty = () => {
                     <input
                       type="text"
                       id="post"
-                      required
                       value={data.post}
                       onChange={(e) => setData({ ...data, post: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
@@ -287,7 +286,6 @@ const AddFaculty = () => {
                     <input
                       type="number"
                       id="experience"
-                      required
                       value={data.experience}
                       onChange={(e) => setData({ ...data, experience: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
