@@ -27,7 +27,7 @@ const Sidebar = ({ selectedMenu, setSelectedMenu, userType }) => {
           { id: "Branch", label: "Branch", icon: MdOutlineSchool, color: "from-indigo-500 to-indigo-600" },
           { id: "Notice", label: "Notice", icon: FiFileText, color: "from-pink-500 to-pink-600" },
           { id: "Subjects", label: "Subjects", icon: MdOutlineSubject, color: "from-teal-500 to-teal-600" },
-          { id: "Timetable", label: "Timetable", icon: FiCalendar, color: "from-red-500 to-red-600" },
+          { id: "Timetables", label: "Timetables", icon: FiCalendar, color: "from-red-500 to-red-600" },
           { id: "Admin", label: "Admins", icon: FiSettings, color: "from-gray-500 to-gray-600" },
           { id: "Attendance", label: "Attendance", icon: FiGrid, color: "from-yellow-500 to-yellow-600" },
           { id: "Section", label: "Section", icon: FiGrid, color: "from-cyan-500 to-cyan-600" }
@@ -136,7 +136,7 @@ const Sidebar = ({ selectedMenu, setSelectedMenu, userType }) => {
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-700">Sphoorthy</p>
-                <p className="text-xs text-gray-500">Educational College Automation Package</p>
+                <p className="text-xs text-gray-500">Management System</p>
               </div>
             </div>
           </div>

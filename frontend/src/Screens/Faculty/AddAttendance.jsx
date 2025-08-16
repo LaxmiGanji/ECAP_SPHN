@@ -13,6 +13,7 @@ const AddAttendance = () => {
   const [filteredSubjects, setFilteredSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState("-- Select --");
   const [selectedBranch, setSelectedBranch] = useState("-- Select --");
+  const [selectedSection, setSelectedSection] = useState("-- Select --");
   const [selectedPeriod, setSelectedPeriod] = useState("-- Select --");
   const [selectAllChecked, setSelectAllChecked] = useState(false);
   const [range, setRange] = useState({ start: "", end: "" });
@@ -20,6 +21,9 @@ const AddAttendance = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
+
+  // Sections available for filtering
+  const sections = ['A', 'B', 'C', 'D'];
 
   // Fetch branch data
   const getBranchData = () => {
@@ -94,6 +98,11 @@ const AddAttendance = () => {
     const newBranch = e.target.value;
     setSelectedBranch(newBranch);
     filterSubjectsBySemester(semester);
+  };
+
+  // Handle section change
+  const handleSectionChange = (e) => {
+    setSelectedSection(e.target.value);
   };
 
   // Handle subject change
@@ -186,7 +195,7 @@ const AddAttendance = () => {
   // Filter students based on filters
   useEffect(() => {
     filterStudents();
-  }, [students, selectedBranch, semester, range]);
+  }, [students, selectedBranch, semester, selectedSection, range]);
 
   const filterStudents = () => {
     let filtered = students;
@@ -199,6 +208,10 @@ const AddAttendance = () => {
 
     if (semester && semester !== "-- Select --") {
       filtered = filtered.filter((student) => String(student.semester) === semester);
+    }
+
+    if (selectedSection && selectedSection !== "-- Select --") {
+      filtered = filtered.filter((student) => student.section === selectedSection);
     }
 
     if (range.start && range.end) {
@@ -229,6 +242,7 @@ const AddAttendance = () => {
       enrollmentNo: student.enrollmentNo,
       name: `${student.firstName} ${student.lastName}`,
       branch: student.branch,
+      section: student.section,
       subject: selectedSubject,
       period: selectedPeriod,
       semester: semester,
@@ -285,6 +299,7 @@ const AddAttendance = () => {
     const attendanceData = filteredStudents.map((student) => ({
       enrollmentNo: student.enrollmentNo,
       branch: student.branch,
+      section: student.section,
       subject: selectedSubject,
       period: selectedPeriod,
       semester: semester,
@@ -326,6 +341,7 @@ const AddAttendance = () => {
         enrollmentNo: student.enrollmentNo,
         name: `${student.firstName} ${student.lastName}`,
         branch: student.branch,
+        section: student.section,
         subject: selectedSubject,
         period: selectedPeriod,
         semester: semester,
@@ -363,7 +379,7 @@ const AddAttendance = () => {
       <h2 className="text-2xl font-bold text-center mb-6">Add Attendance</h2>
 
       {/* Filters */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-7 gap-4 mb-6">
         <div>
           <label className="block font-medium text-gray-700">Branch</label>
           <select
@@ -391,6 +407,22 @@ const AddAttendance = () => {
             {[...Array(8).keys()].map((i) => (
               <option key={i + 1} value={i + 1}>
                 {i + 1}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-700">Section</label>
+          <select
+            value={selectedSection}
+            onChange={handleSectionChange}
+            className="w-full px-4 py-2 border rounded"
+          >
+            <option>-- Select --</option>
+            {sections.map((section) => (
+              <option key={section} value={section}>
+                {section}
               </option>
             ))}
           </select>
@@ -547,6 +579,7 @@ const AddAttendance = () => {
               <th className="border border-gray-300 px-4 py-2">Enrollment No</th>
               <th className="border border-gray-300 px-4 py-2">Name</th>
               <th className="border border-gray-300 px-4 py-2">Branch</th>
+              <th className="border border-gray-300 px-4 py-2">Section</th>
               <th className="border border-gray-300 px-4 py-2">Semester</th>
             </tr>
           </thead>
@@ -568,6 +601,7 @@ const AddAttendance = () => {
                   {student.firstName} {student.middleName} {student.lastName}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">{student.branch}</td>
+                <td className="border border-gray-300 px-4 py-2">{student.section}</td>
                 <td className="border border-gray-300 px-4 py-2">{student.semester}</td>
               </tr>
             ))}

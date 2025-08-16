@@ -9,7 +9,6 @@ import Notice from "../../components/Notice";
 import Student from "./Student";
 import Faculty from "./Faculty";
 import Subjects from "./Subject";
-import Timetable from "./Timetable";
 import { baseApiURL } from "../../baseUrl";
 import Admin from "./Admin";
 import Profile from "./Profile";
@@ -17,6 +16,7 @@ import Branch from "./Branch";
 import Attendance from "./Attendence";
 import Library from "./Library";
 import Section from "./Section";
+import Timetables from "./Timetables";
 
 const Home = () => {
   const router = useLocation();
@@ -102,8 +102,8 @@ const Home = () => {
         return <Notice />;
       case "Subjects":
         return <Subjects />;
-      case "Timetable":
-        return <Timetable />;
+      case "Timetables":
+        return <Timetables />;
       case "Admin":
         return <Admin />;
       case "Attendance":

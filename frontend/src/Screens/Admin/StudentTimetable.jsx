@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { baseApiURL } from "../../baseUrl";
 import ViewTimetable from "../Common/ViewTimetable";
 
-const Timetable = () => {
+const StudentTimetable = () => {
   const [selectedTab, setSelectedTab] = useState("create");
   const [selected, setSelected] = useState({ branch: "", semester: "", section: "" });
   const [branch, setBranch] = useState([]);
@@ -473,4 +473,4 @@ const Timetable = () => {
   );
 };
 
-export default Timetable; 
+export default StudentTimetable;

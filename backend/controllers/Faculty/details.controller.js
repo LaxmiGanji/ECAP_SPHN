@@ -123,4 +123,34 @@ const getCount = async (req, res) => {
     }
 }
 
-module.exports = { getDetails, addDetails, updateDetails, deleteDetails, getCount }
+const updateTimetable = async (req, res) => {
+    try {
+      const { timetable } = req.body;
+      const employeeId = req.params.id;
+  
+      const user = await facultyDetails.findOneAndUpdate(
+        { employeeId },
+        { timetable },
+        { new: true }
+      );
+  
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: "No Faculty Found",
+        });
+      }
+  
+      const data = {
+        success: true,
+        message: "Timetable Updated Successfully!",
+        user,
+      };
+      res.json(data);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  };
+
+module.exports = { getDetails, addDetails, updateDetails, deleteDetails, getCount, updateTimetable}

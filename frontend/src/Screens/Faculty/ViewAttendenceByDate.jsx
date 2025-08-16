@@ -43,7 +43,6 @@ const ViewAttendenceByDate = () => {
       }
     };
 
-
     const fetchBranches = async () => {
       try {
         const response = await axios.get(`${baseApiURL()}/branch/getBranch`);
@@ -244,261 +243,260 @@ const ViewAttendenceByDate = () => {
   }
 
   return (
-  <div className="overflow-x-auto">
-    <div className="flex flex-col sm:flex-row justify-start gap-4 mb-4 flex-wrap">
-      <div>
-        <label className="mr-2">Branch:</label>
-        <select
-          value={selectedBranch}
-          onChange={handleBranchChange}
-          className="border rounded px-2 py-1"
-        >
-          <option value="">All Branches</option>
-          {branches.map((branch) => (
-            <option key={branch} value={branch}>
-              {branch}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="mr-2">Semester:</label>
-        <select
-          value={selectedSemester}
-          onChange={handleSemesterChange}
-          className="border rounded px-2 py-1"
-        >
-          <option value="">All Semesters</option>
-          {[1,2,3,4,5,6,7,8].map((sem) => (
-            <option key={sem} value={sem}>{sem}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="mr-2">Section:</label>
-        <select
-          value={selectedSection}
-          onChange={handleSectionChange}
-          className="border rounded px-2 py-1"
-        >
-          <option value="">All Sections</option>
-          {sections.map((section) => (
-            <option key={section} value={section}>{section}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="mr-2">Subject:</label>
-        <select
-          value={selectedSubject}
-          onChange={handleSubjectChange}
-          className="border rounded px-2 py-1"
-        >
-          <option value="">All Subjects</option>
-          {subjects.map((subject) => (
-            <option key={subject} value={subject}>
-              {subject}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="mr-2">From Date:</label>
-        <DatePicker
-          selected={startDate}
-          onChange={handleStartDateChange}
-          selectsStart
-          startDate={startDate}
-          endDate={endDate}
-          placeholderText="Select start date"
-          className="border rounded px-2 py-1"
-          maxDate={new Date()}
-        />
-      </div>
-      <div>
-        <label className="mr-2">To Date:</label>
-        <DatePicker
-          selected={endDate}
-          onChange={handleEndDateChange}
-          selectsEnd
-          startDate={startDate}
-          endDate={endDate}
-          minDate={startDate}
-          maxDate={new Date()}
-          placeholderText="Select end date"
-          className="border rounded px-2 py-1"
-        />
-      </div>
-      <button
-        onClick={clearFilters}
-        className="bg-gray-500 text-white px-4 py-2 rounded"
-      >
-        Clear Filters
-      </button>
-    </div>
-
-    {attendanceRecords.length === 0 ? (
-      <div className="text-center mt-5">
-        <p>No attendance records found for the selected filters.</p>
-      </div>
-    ) : (
-      <table className="min-w-full table-auto">
-        <thead className="bg-gray-200">
-          <tr>
-            <th className="py-2 px-4 text-left">Enrollment No</th>
-            <th className="py-2 px-4 text-left">Name</th>
-            <th className="py-2 px-4 text-left">Branch</th>
-            <th className="py-2 px-4 text-left">Semester</th>
-            <th className="py-2 px-4 text-left">Section</th>
-            <th className="py-2 px-4 text-left">Subject</th>
-            <th className="py-2 px-4 text-left">Period</th>
-            <th className="py-2 px-4 text-left">Date</th>
-            <th className="py-2 px-4 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {attendanceRecords
-            .filter(record =>
-              (!selectedBranch || record.branch === selectedBranch) &&
-              (!selectedSemester || String(record.semester) === String(selectedSemester)) &&
-              (!selectedSection || record.section === selectedSection) &&
-              (!selectedSubject || record.subject === selectedSubject)
-            )
-            .map((record) => (
-              <tr key={record._id} className="border-b">
-                <td className="py-2 px-4">{record.enrollmentNo}</td>
-                <td className="py-2 px-4">{record.name}</td>
-                <td className="py-2 px-4">{record.branch}</td>
-                <td className="py-2 px-4">{record.semester}</td>
-                <td className="py-2 px-4">{record.section}</td>
-                <td className="py-2 px-4">{record.subject}</td>
-                <td className="py-2 px-4">{record.period}</td>
-                <td className="py-2 px-4">
-                  {new Date(record.date).toLocaleDateString()}
-                </td>
-                <td className="py-2 px-4 flex gap-2">
-                  <button
-                    onClick={() => handleDeleteAttendance(record._id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
+    <div className="overflow-x-auto">
+      <div className="flex flex-col sm:flex-row justify-start gap-4 mb-4 flex-wrap">
+        <div>
+          <label className="mr-2">Branch:</label>
+          <select
+            value={selectedBranch}
+            onChange={handleBranchChange}
+            className="border rounded px-2 py-1"
+          >
+            <option value="">All Branches</option>
+            {branches.map((branch) => (
+              <option key={branch} value={branch}>
+                {branch}
+              </option>
             ))}
-        </tbody>
-      </table>
-    )}
-
-    {/* Edit Modal */}
-    {editModal && (
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-        <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-          <h3 className="text-lg font-bold mb-4">Edit Attendance</h3>
-          <form onSubmit={handleEditSubmit} className="space-y-3">
-            <div>
-              <label className="block mb-1">Branch</label>
-              <select
-                name="branch"
-                value={editForm.branch}
-                onChange={handleEditChange}
-                className="border rounded px-2 py-1 w-full"
-                required
-              >
-                <option value="">Select Branch</option>
-                {branches.map((branch) => (
-                  <option key={branch} value={branch}>{branch}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1">Semester</label>
-              <select
-                name="semester"
-                value={editForm.semester}
-                onChange={handleEditChange}
-                className="border rounded px-2 py-1 w-full"
-                required
-              >
-                <option value="">Select Semester</option>
-                {[1,2,3,4,5,6,7,8].map((sem) => (
-                  <option key={sem} value={sem}>{sem}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1">Section</label>
-              <select
-                name="section"
-                value={editForm.section}
-                onChange={handleEditChange}
-                className="border rounded px-2 py-1 w-full"
-                required
-              >
-                <option value="">Select Section</option>
-                {sections.map((section) => (
-                  <option key={section} value={section}>{section}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1">Subject</label>
-              <select
-                name="subject"
-                value={editForm.subject}
-                onChange={handleEditChange}
-                className="border rounded px-2 py-1 w-full"
-                required
-              >
-                <option value="">Select Subject</option>
-                {subjects.map((subject) => (
-                  <option key={subject} value={subject}>{subject}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1">Period</label>
-              <input
-                type="text"
-                name="period"
-                value={editForm.period}
-                onChange={handleEditChange}
-                className="border rounded px-2 py-1 w-full"
-                required
-              />
-            </div>
-            <div>
-              <label className="block mb-1">Date</label>
-              <DatePicker
-                selected={editForm.date}
-                onChange={handleEditDateChange}
-                className="border rounded px-2 py-1 w-full"
-                required
-                maxDate={new Date()}
-              />
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                type="button"
-                onClick={() => setEditModal(false)}
-                className="bg-gray-400 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="bg-green-600 text-white px-4 py-2 rounded"
-              >
-                Save
-              </button>
-            </div>
-          </form>
+          </select>
         </div>
+        <div>
+          <label className="mr-2">Semester:</label>
+          <select
+            value={selectedSemester}
+            onChange={handleSemesterChange}
+            className="border rounded px-2 py-1"
+          >
+            <option value="">All Semesters</option>
+            {[1,2,3,4,5,6,7,8].map((sem) => (
+              <option key={sem} value={sem}>{sem}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mr-2">Section:</label>
+          <select
+            value={selectedSection}
+            onChange={handleSectionChange}
+            className="border rounded px-2 py-1"
+          >
+            <option value="">All Sections</option>
+            {sections.map((section) => (
+              <option key={section} value={section}>{section}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mr-2">Subject:</label>
+          <select
+            value={selectedSubject}
+            onChange={handleSubjectChange}
+            className="border rounded px-2 py-1"
+          >
+            <option value="">All Subjects</option>
+            {subjects.map((subject) => (
+              <option key={subject} value={subject}>
+                {subject}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mr-2">From Date:</label>
+          <DatePicker
+            selected={startDate}
+            onChange={handleStartDateChange}
+            selectsStart
+            startDate={startDate}
+            endDate={endDate}
+            placeholderText="Select start date"
+            className="border rounded px-2 py-1"
+            maxDate={new Date()}
+          />
+        </div>
+        <div>
+          <label className="mr-2">To Date:</label>
+          <DatePicker
+            selected={endDate}
+            onChange={handleEndDateChange}
+            selectsEnd
+            startDate={startDate}
+            endDate={endDate}
+            minDate={startDate}
+            maxDate={new Date()}
+            placeholderText="Select end date"
+            className="border rounded px-2 py-1"
+          />
+        </div>
+        <button
+          onClick={clearFilters}
+          className="bg-gray-500 text-white px-4 py-2 rounded"
+        >
+          Clear Filters
+        </button>
       </div>
-    )}
-  </div>
-);
+
+      {attendanceRecords.length === 0 ? (
+        <div className="text-center mt-5">
+          <p>No attendance records found for the selected filters.</p>
+        </div>
+      ) : (
+        <table className="min-w-full table-auto">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="py-2 px-4 text-left">Enrollment No</th>
+              <th className="py-2 px-4 text-left">Name</th>
+              <th className="py-2 px-4 text-left">Branch</th>
+              <th className="py-2 px-4 text-left">Semester</th>
+              <th className="py-2 px-4 text-left">Section</th>
+              <th className="py-2 px-4 text-left">Subject</th>
+              <th className="py-2 px-4 text-left">Period</th>
+              <th className="py-2 px-4 text-left">Date</th>
+              <th className="py-2 px-4 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {attendanceRecords
+              .filter(record =>
+                (!selectedBranch || record.branch === selectedBranch) &&
+                (!selectedSemester || String(record.semester) === String(selectedSemester)) &&
+                (!selectedSection || record.section === selectedSection) &&
+                (!selectedSubject || record.subject === selectedSubject)
+              )
+              .map((record) => (
+                <tr key={record._id} className="border-b">
+                  <td className="py-2 px-4">{record.enrollmentNo}</td>
+                  <td className="py-2 px-4">{record.name}</td>
+                  <td className="py-2 px-4">{record.branch}</td>
+                  <td className="py-2 px-4">{record.semester}</td>
+                  <td className="py-2 px-4">{record.section}</td>
+                  <td className="py-2 px-4">{record.subject}</td>
+                  <td className="py-2 px-4">{record.period}</td>
+                  <td className="py-2 px-4">
+                    {new Date(record.date).toLocaleDateString()}
+                  </td>
+                  <td className="py-2 px-4 flex gap-2">
+                    <button
+                      onClick={() => handleDeleteAttendance(record._id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Edit Modal */}
+      {editModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+            <h3 className="text-lg font-bold mb-4">Edit Attendance</h3>
+            <form onSubmit={handleEditSubmit} className="space-y-3">
+              <div>
+                <label className="block mb-1">Branch</label>
+                <select
+                  name="branch"
+                  value={editForm.branch}
+                  onChange={handleEditChange}
+                  className="border rounded px-2 py-1 w-full"
+                  required
+                >
+                  <option value="">Select Branch</option>
+                  {branches.map((branch) => (
+                    <option key={branch} value={branch}>{branch}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1">Semester</label>
+                <select
+                  name="semester"
+                  value={editForm.semester}
+                  onChange={handleEditChange}
+                  className="border rounded px-2 py-1 w-full"
+                  required
+                >
+                  <option value="">Select Semester</option>
+                  {[1,2,3,4,5,6,7,8].map((sem) => (
+                    <option key={sem} value={sem}>{sem}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1">Section</label>
+                <select
+                  name="section"
+                  value={editForm.section}
+                  onChange={handleEditChange}
+                  className="border rounded px-2 py-1 w-full"
+                  required
+                >
+                  <option value="">Select Section</option>
+                  {sections.map((section) => (
+                    <option key={section} value={section}>{section}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1">Subject</label>
+                <select
+                  name="subject"
+                  value={editForm.subject}
+                  onChange={handleEditChange}
+                  className="border rounded px-2 py-1 w-full"
+                  required
+                >
+                  <option value="">Select Subject</option>
+                  {subjects.map((subject) => (
+                    <option key={subject} value={subject}>{subject}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1">Period</label>
+                <input
+                  type="text"
+                  name="period"
+                  value={editForm.period}
+                  onChange={handleEditChange}
+                  className="border rounded px-2 py-1 w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1">Date</label>
+                <DatePicker
+                  selected={editForm.date}
+                  onChange={handleEditDateChange}
+                  className="border rounded px-2 py-1 w-full"
+                  required
+                  maxDate={new Date()}
+                />
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditModal(false)}
+                  className="bg-gray-400 text-white px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-green-600 text-white px-4 py-2 rounded"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
-// Export the component
 export default ViewAttendenceByDate;
