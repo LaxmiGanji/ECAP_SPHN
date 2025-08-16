@@ -7,15 +7,15 @@ const ViewTotalAttendance = () => {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [subjectTotals, setSubjectTotals] = useState({});
   const [studentSubjectSummary, setStudentSubjectSummary] = useState({});
-  const [allSubjects, setAllSubjects] = useState([]); // Store all subjects
-  const [filteredSubjects, setFilteredSubjects] = useState([]); // Store filtered subjects
+  const [allSubjects, setAllSubjects] = useState([]);
+  const [filteredSubjects, setFilteredSubjects] = useState([]);
   const [enrollmentNumbers, setEnrollmentNumbers] = useState([]);
   const [branches, setBranches] = useState([]);
 
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [selectedEnrollment, setSelectedEnrollment] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
+  const [enrollmentSearch, setEnrollmentSearch] = useState(""); // Search box state
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -149,10 +149,6 @@ const ViewTotalAttendance = () => {
     setSelectedSubject(e.target.value);
   };
 
-  const handleEnrollmentChange = (e) => {
-    setSelectedEnrollment(e.target.value);
-  };
-
   const handleBranchChange = (e) => {
     setSelectedBranch(e.target.value);
   };
@@ -195,7 +191,7 @@ const ViewTotalAttendance = () => {
             rec.enrollmentNo === student &&
             (!selectedBranch || rec.branch === selectedBranch) &&
             (!selectedSemester || String(rec.semester) === String(selectedSemester))
-        ); // Find a record for branch/semester info
+        );
         dataToExport.push({
           "Enrollment No": student,
           Branch: studentRecord?.branch || "",
@@ -213,7 +209,9 @@ const ViewTotalAttendance = () => {
       .filter(
         (item) =>
           (selectedSubject ? item.Subject === selectedSubject : true) &&
-          (selectedEnrollment ? item["Enrollment No"] === selectedEnrollment : true) &&
+          (enrollmentSearch
+            ? item["Enrollment No"].toLowerCase().includes(enrollmentSearch.toLowerCase())
+            : true) &&
           (selectedBranch ? item.Branch === selectedBranch : true) &&
           (selectedSemester ? item.Semester === parseInt(selectedSemester) : true)
       )
@@ -222,15 +220,15 @@ const ViewTotalAttendance = () => {
         const numB = parseInt(b["Enrollment No"], 10);
 
         if (isNaN(numA) && isNaN(numB)) {
-          return a["Enrollment No"].localeCompare(b["Enrollment No"]); // Both are non-numeric, sort as strings
+          return a["Enrollment No"].localeCompare(b["Enrollment No"]);
         }
         if (isNaN(numA)) {
-          return 1; // Push non-numeric A to the end
+          return 1;
         }
         if (isNaN(numB)) {
-          return -1; // Push non-numeric B to the end
+          return -1;
         }
-        return numA - numB; // Both are numeric, sort numerically
+        return numA - numB;
       });
 
     const ws = XLSX.utils.json_to_sheet(filteredData);
@@ -311,18 +309,13 @@ const ViewTotalAttendance = () => {
 
         <div>
           <label className="mr-2">Enrollment No:</label>
-          <select
-            value={selectedEnrollment}
-            onChange={handleEnrollmentChange}
+          <input
+            type="text"
+            value={enrollmentSearch}
+            onChange={(e) => setEnrollmentSearch(e.target.value)}
             className="border rounded px-2 py-1"
-          >
-            <option value="">-- Select --</option>
-            {enrollmentNumbers.map((enrollment) => (
-              <option key={enrollment} value={enrollment}>
-                {enrollment}
-              </option>
-            ))}
-          </select>
+            placeholder="Search Enrollment No"
+          />
         </div>
 
         <button
@@ -353,19 +346,18 @@ const ViewTotalAttendance = () => {
               const numB = parseInt(studentB, 10);
 
               if (isNaN(numA) && isNaN(numB)) {
-                return studentA.localeCompare(studentB); // Both are non-numeric, sort as strings
+                return studentA.localeCompare(studentB);
               }
               if (isNaN(numA)) {
-                return 1; // studentA is non-numeric, push to end
+                return 1;
               }
               if (isNaN(numB)) {
-                return -1; // studentB is non-numeric, push to end
+                return -1;
               }
-              return numA - numB; // Both are numeric, sort numerically
+              return numA - numB;
             })
             .flatMap(([student, subjectsData]) => {
               const rows = [];
-              // Add individual subject rows
               Object.entries(subjectsData)
                 .filter(([key]) => key !== "overallTotal")
                 .forEach(([subject, data]) => {
@@ -389,14 +381,13 @@ const ViewTotalAttendance = () => {
                   });
                 });
 
-              // Add overall total row
               if (subjectsData.overallTotal) {
                 const studentRecord = attendanceRecords.find(
                   (rec) =>
                     rec.enrollmentNo === student &&
                     (!selectedBranch || rec.branch === selectedBranch) &&
                     (!selectedSemester || String(rec.semester) === String(selectedSemester))
-                ); // Find a record for branch/semester info
+                );
                 rows.push({
                   student,
                   subject: "TOTAL",
@@ -414,7 +405,9 @@ const ViewTotalAttendance = () => {
             .filter(
               (item) =>
                 (selectedSubject ? item.subject === selectedSubject : true) &&
-                (selectedEnrollment ? item.student === selectedEnrollment : true) &&
+                (enrollmentSearch
+                  ? item.student.toLowerCase().includes(enrollmentSearch.toLowerCase())
+                  : true) &&
                 (selectedBranch ? item.branch === selectedBranch : true) &&
                 (selectedSemester ? item.semester === parseInt(selectedSemester) : true)
             )
