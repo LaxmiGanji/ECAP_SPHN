@@ -18,10 +18,6 @@ const attendanceSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  section: {
-    type: String,
-    required: false,
-  },
   subject: {
     type: String,
     required: true,
