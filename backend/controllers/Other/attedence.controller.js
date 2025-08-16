@@ -143,29 +143,27 @@ const getAllAttendance = async (req, res) => {
 
 const getAttendanceByDate = async (req, res) => {
   try {
-    const { subject, startDate, endDate } = req.query;
-    
-    let query = {};
-    
-    if (subject) {
-      query.subject = subject;
+    const { branch, semester, section, subject, startDate, endDate } = req.query;
+    const filter = {};
+
+    if (branch) filter.branch = branch;
+    if (semester) filter.semester = semester;
+    if (section) filter.section = section; // <-- Make sure this line exists
+    if (subject) filter.subject = subject;
+    if (startDate && endDate) {
+      filter.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    } else if (startDate) {
+      filter.date = { $gte: new Date(startDate) };
+    } else if (endDate) {
+      filter.date = { $lte: new Date(endDate) };
     }
-    
-    if (startDate || endDate) {
-      query.date = {};
-      if (startDate) query.date.$gte = new Date(startDate);
-      if (endDate) query.date.$lte = new Date(endDate);
-    }
-    
-    const attendance = await Attendance.find(query).sort({ date: -1 });
-    
-    res.status(200).json({ success: true, attendance });
+
+    const attendance = await Attendence.find(filter);
+    res.json({ success: true, attendance });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Server Error' });
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 const getStudentAttendance = async (req, res) => {
   try {
     const { enrollmentNo } = req.params;
