@@ -438,3 +438,5 @@ const ViewTotalAttendance = () => {
     </div>
   );
 };
+
+export default ViewTotalAttendance;
