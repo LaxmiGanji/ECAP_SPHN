@@ -378,12 +378,6 @@ const ViewAttendenceByDate = () => {
                 </td>
                 <td className="py-2 px-4 flex gap-2">
                   <button
-                    onClick={() => openEditModal(record)}
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                  >
-                    Edit
-                  </button>
-                  <button
                     onClick={() => handleDeleteAttendance(record._id)}
                     className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
                   >
