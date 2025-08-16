@@ -3,7 +3,7 @@ const Attendance = require("../../models/Other/attedence.model");
 
 const addAttendance = async (req, res) => {
   try {
-    const { enrollmentNo, name, branch, semester, subject, period, date } = req.body;
+    const { enrollmentNo, name, branch, semester, subject, period, section, date } = req.body;
 
     // Create a new attendance record
     const attendance = new Attendance({
@@ -13,6 +13,7 @@ const addAttendance = async (req, res) => {
       subject,
       semester,
       period,
+      section,
       date: date ? new Date(date) : Date.now() // Use provided date or current date
     });
 
@@ -32,6 +33,7 @@ const addBulkAttendance = async (req, res) => {
       subject: record.subject,
       semester: record.semester,
       period: record.period,
+      section: record.section,
       date: record.date ? new Date(record.date) : Date.now() // Use provided date or current date
     }));
 
@@ -45,7 +47,7 @@ const addBulkAttendance = async (req, res) => {
 // ✅ FIXED: Added 'semester' and 'date' to destructuring
 const removeAttendance = async (req, res) => {
   try {
-    const { enrollmentNo, branch, subject, semester, period, date } = req.body;
+    const { enrollmentNo, branch, subject, semester, period, section, date } = req.body;
 
     // Build the query object
     const query = {
@@ -54,6 +56,7 @@ const removeAttendance = async (req, res) => {
       subject,
       semester,
       period,
+      section,
     };
 
     // Add date to query if provided
@@ -95,6 +98,7 @@ const removeBulkAttendance = async (req, res) => {
         subject: record.subject,
         semester: record.semester,  
         period: record.period,
+        section: record.section,
       };
       
       // Add date to filter if provided
