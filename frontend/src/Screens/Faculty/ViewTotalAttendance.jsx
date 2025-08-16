@@ -7,7 +7,8 @@ const ViewTotalAttendance = () => {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [subjectTotals, setSubjectTotals] = useState({});
   const [studentSubjectSummary, setStudentSubjectSummary] = useState({});
-  const [subjects, setSubjects] = useState([]);
+  const [allSubjects, setAllSubjects] = useState([]); // Store all subjects
+  const [filteredSubjects, setFilteredSubjects] = useState([]); // Store filtered subjects
   const [enrollmentNumbers, setEnrollmentNumbers] = useState([]);
   const [branches, setBranches] = useState([]);
 
@@ -19,17 +20,12 @@ const ViewTotalAttendance = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [allSubjects, setAllSubjects] = useState([]); // Store all subjects
-  const [filteredSubjects, setFilteredSubjects] = useState([]); // Store filtered subjects
-
-
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
         const response = await axios.get(`${baseApiURL()}/attendence/getAll`);
         if (response.data.success) {
           setAttendanceRecords(response.data.attendance);
-
 
           const uniqueEnrollments = [
             ...new Set(response.data.attendance.map((item) => item.enrollmentNo)),
@@ -45,56 +41,73 @@ const ViewTotalAttendance = () => {
       }
     };
 
+    const fetchBranches = async () => {
+      try {
+        const response = await axios.get(`${baseApiURL()}/branch/getBranch`);
+        if (response.data.success) {
+          const branchNames = response.data.branches.map((b) => b.name);
+          setBranches(branchNames);
+        }
+      } catch (err) {
+        console.error("Error fetching branches:", err);
+      }
+    };
+
     fetchAttendance();
-    
+    fetchBranches();
   }, []);
 
   useEffect(() => {
-  // Filter subjects by branch and semester
-  if (selectedBranch && selectedSemester) {
-    const filtered = allSubjects.filter(
-      (subject) =>
-        subject.branch?.name === selectedBranch &&
-        String(subject.semester) === String(selectedSemester)
-    );
-    setFilteredSubjects(filtered);
-    setSubjects(filtered.map((item) => item.name));
-    // Also update subjectTotals for filtered subjects only
-    const subjectData = filtered.reduce((acc, item) => {
-      acc[item.name] = item.total;
-      return acc;
-    }, {});
-    setSubjectTotals(subjectData);
-  } else {
-    setFilteredSubjects([]);
-    setSubjects([]);
-    setSubjectTotals({});
-  }
-}, [selectedBranch, selectedSemester, allSubjects]);
+    // Fetch all subjects once
+    const fetchSubjectData = async () => {
+      try {
+        const response = await axios.get(`${baseApiURL()}/subject/getSubject`);
+        if (response.data && response.data.success) {
+          setAllSubjects(response.data.subject);
+        }
+      } catch (error) {
+        console.error("Error fetching subject totals:", error);
+      }
+    };
+    fetchSubjectData();
+  }, []);
 
   useEffect(() => {
-    const fetchSubjectData = async () => {
-    try {
-      const response = await axios.get(`${baseApiURL()}/subject/getSubject`);
-      if (response.data && response.data.success) {
-        setAllSubjects(response.data.subject);
-      }
-    } catch (error) {
-      console.error("Error fetching subject totals:", error);
+    // Filter subjects by branch and semester
+    if (selectedBranch && selectedSemester) {
+      const filtered = allSubjects.filter(
+        (subject) =>
+          subject.branch?.name === selectedBranch &&
+          String(subject.semester) === String(selectedSemester)
+      );
+      setFilteredSubjects(filtered);
+      // Also update subjectTotals for filtered subjects only
+      const subjectData = filtered.reduce((acc, item) => {
+        acc[item.name] = item.total;
+        return acc;
+      }, {});
+      setSubjectTotals(subjectData);
+    } else {
+      setFilteredSubjects([]);
+      setSubjectTotals({});
     }
-  };
-  fetchSubjectData();
-}, []);
+  }, [selectedBranch, selectedSemester, allSubjects]);
 
   useEffect(() => {
     if (attendanceRecords.length > 0 && Object.keys(subjectTotals).length > 0) {
       const summary = {};
 
       attendanceRecords.forEach((record) => {
-        const { enrollmentNo, subject } = record;
-        if (!summary[enrollmentNo]) summary[enrollmentNo] = {};
-        if (!summary[enrollmentNo][subject]) summary[enrollmentNo][subject] = 0;
-        summary[enrollmentNo][subject] += 1;
+        const { enrollmentNo, subject, branch, semester } = record;
+        // Only include records matching selected branch/semester
+        if (
+          (!selectedBranch || branch === selectedBranch) &&
+          (!selectedSemester || String(semester) === String(selectedSemester))
+        ) {
+          if (!summary[enrollmentNo]) summary[enrollmentNo] = {};
+          if (!summary[enrollmentNo][subject]) summary[enrollmentNo][subject] = 0;
+          summary[enrollmentNo][subject] += 1;
+        }
       });
 
       Object.keys(summary).forEach((student) => {
@@ -119,13 +132,18 @@ const ViewTotalAttendance = () => {
         summary[student].overallTotal = {
           attended: totalAttendedAllSubjects,
           total: totalClassesAllSubjects,
-          percentage: totalClassesAllSubjects > 0 ? ((totalAttendedAllSubjects / totalClassesAllSubjects) * 100).toFixed(2) : 0,
+          percentage:
+            totalClassesAllSubjects > 0
+              ? ((totalAttendedAllSubjects / totalClassesAllSubjects) * 100).toFixed(2)
+              : 0,
         };
       });
 
       setStudentSubjectSummary(summary);
+    } else {
+      setStudentSubjectSummary({});
     }
-  }, [attendanceRecords, subjectTotals]);
+  }, [attendanceRecords, subjectTotals, selectedBranch, selectedSemester]);
 
   const handleSubjectChange = (e) => {
     setSelectedSubject(e.target.value);
@@ -148,10 +166,14 @@ const ViewTotalAttendance = () => {
 
     Object.entries(studentSubjectSummary).forEach(([student, subjectsData]) => {
       const studentRecords = Object.entries(subjectsData)
-        .filter(([key]) => key !== 'overallTotal')
+        .filter(([key]) => key !== "overallTotal")
         .map(([subject, data]) => {
           const studentRecord = attendanceRecords.find(
-            (rec) => rec.enrollmentNo === student && rec.subject === subject
+            (rec) =>
+              rec.enrollmentNo === student &&
+              rec.subject === subject &&
+              (!selectedBranch || rec.branch === selectedBranch) &&
+              (!selectedSemester || String(rec.semester) === String(selectedSemester))
           );
           return {
             "Enrollment No": student,
@@ -169,7 +191,10 @@ const ViewTotalAttendance = () => {
 
       if (subjectsData.overallTotal) {
         const studentRecord = attendanceRecords.find(
-          (rec) => rec.enrollmentNo === student
+          (rec) =>
+            rec.enrollmentNo === student &&
+            (!selectedBranch || rec.branch === selectedBranch) &&
+            (!selectedSemester || String(rec.semester) === String(selectedSemester))
         ); // Find a record for branch/semester info
         dataToExport.push({
           "Enrollment No": student,
@@ -184,26 +209,29 @@ const ViewTotalAttendance = () => {
       }
     });
 
-    const filteredData = dataToExport.filter((item) =>
-      (selectedSubject ? item.Subject === selectedSubject : true) &&
-      (selectedEnrollment ? item["Enrollment No"] === selectedEnrollment : true) &&
-      (selectedBranch ? item.Branch === selectedBranch : true) &&
-      (selectedSemester ? item.Semester === parseInt(selectedSemester) : true)
-    ).sort((a, b) => {
-      const numA = parseInt(a["Enrollment No"], 10);
-      const numB = parseInt(b["Enrollment No"], 10);
+    const filteredData = dataToExport
+      .filter(
+        (item) =>
+          (selectedSubject ? item.Subject === selectedSubject : true) &&
+          (selectedEnrollment ? item["Enrollment No"] === selectedEnrollment : true) &&
+          (selectedBranch ? item.Branch === selectedBranch : true) &&
+          (selectedSemester ? item.Semester === parseInt(selectedSemester) : true)
+      )
+      .sort((a, b) => {
+        const numA = parseInt(a["Enrollment No"], 10);
+        const numB = parseInt(b["Enrollment No"], 10);
 
-      if (isNaN(numA) && isNaN(numB)) {
-        return a["Enrollment No"].localeCompare(b["Enrollment No"]); // Both are non-numeric, sort as strings
-      }
-      if (isNaN(numA)) {
-        return 1; // Push non-numeric A to the end
-      }
-      if (isNaN(numB)) {
-        return -1; // Push non-numeric B to the end
-      }
-      return numA - numB; // Both are numeric, sort numerically
-    });
+        if (isNaN(numA) && isNaN(numB)) {
+          return a["Enrollment No"].localeCompare(b["Enrollment No"]); // Both are non-numeric, sort as strings
+        }
+        if (isNaN(numA)) {
+          return 1; // Push non-numeric A to the end
+        }
+        if (isNaN(numB)) {
+          return -1; // Push non-numeric B to the end
+        }
+        return numA - numB; // Both are numeric, sort numerically
+      });
 
     const ws = XLSX.utils.json_to_sheet(filteredData);
     const wb = XLSX.utils.book_new();
@@ -273,9 +301,9 @@ const ViewTotalAttendance = () => {
             className="border rounded px-2 py-1"
           >
             <option value="">-- Select --</option>
-            {subjects.map((subject) => (
-              <option key={subject} value={subject}>
-                {subject}
+            {filteredSubjects.map((subject) => (
+              <option key={subject._id} value={subject.name}>
+                {subject.name}
               </option>
             ))}
           </select>
@@ -339,10 +367,14 @@ const ViewTotalAttendance = () => {
               const rows = [];
               // Add individual subject rows
               Object.entries(subjectsData)
-                .filter(([key]) => key !== 'overallTotal')
+                .filter(([key]) => key !== "overallTotal")
                 .forEach(([subject, data]) => {
                   const studentRecord = attendanceRecords.find(
-                    (rec) => rec.enrollmentNo === student && rec.subject === subject
+                    (rec) =>
+                      rec.enrollmentNo === student &&
+                      rec.subject === subject &&
+                      (!selectedBranch || rec.branch === selectedBranch) &&
+                      (!selectedSemester || String(rec.semester) === String(selectedSemester))
                   );
                   rows.push({
                     student,
@@ -360,7 +392,10 @@ const ViewTotalAttendance = () => {
               // Add overall total row
               if (subjectsData.overallTotal) {
                 const studentRecord = attendanceRecords.find(
-                  (rec) => rec.enrollmentNo === student
+                  (rec) =>
+                    rec.enrollmentNo === student &&
+                    (!selectedBranch || rec.branch === selectedBranch) &&
+                    (!selectedSemester || String(rec.semester) === String(selectedSemester))
                 ); // Find a record for branch/semester info
                 rows.push({
                   student,
@@ -384,7 +419,10 @@ const ViewTotalAttendance = () => {
                 (selectedSemester ? item.semester === parseInt(selectedSemester) : true)
             )
             .map((item, index) => (
-              <tr key={index} className={`border-b ${item.isTotalRow ? "bg-gray-100 font-bold" : ""}`}>
+              <tr
+                key={index}
+                className={`border-b ${item.isTotalRow ? "bg-gray-100 font-bold" : ""}`}
+              >
                 <td className="py-2 px-4">{item.student}</td>
                 <td className="py-2 px-4">{item.branch}</td>
                 <td className="py-2 px-4">{item.semester}</td>
@@ -400,5 +438,3 @@ const ViewTotalAttendance = () => {
     </div>
   );
 };
-
-export default ViewTotalAttendance;
