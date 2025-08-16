@@ -15,7 +15,7 @@ const facultyDetails = new mongoose.Schema({
   },
   lastName: {
     type: String,
-    required: false,
+    required: true,
   },
   email: {
     type: String,
@@ -39,23 +39,39 @@ const facultyDetails = new mongoose.Schema({
   },
   post: {
     type: String,
-    required: false,
+    required: true,
   },
   panCard: {
     type: String,
-    required: false,
+    required: true,
   },
   jntuId: {
     type: String,
-    required: false,
+    required: true,
   },
   aicteId: {
     type: String,
-    required: false,
+    required: true,
   },
   profile: {
     type: String,
     required: false,
+  },
+  timetable: {
+    type: [{
+      day: String,
+      periods: [{
+        periodNumber: Number,
+        subject: String,
+        branch: String,
+        semester: String,
+        section: String,
+        startTime: String,
+        endTime: String
+      }]
+    }],
+    required: false,
+    default: []
   }
 }, { timestamps: true });
 
