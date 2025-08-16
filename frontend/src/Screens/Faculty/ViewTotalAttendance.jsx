@@ -19,12 +19,17 @@ const ViewTotalAttendance = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [allSubjects, setAllSubjects] = useState([]); // Store all subjects
+  const [filteredSubjects, setFilteredSubjects] = useState([]); // Store filtered subjects
+
+
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
         const response = await axios.get(`${baseApiURL()}/attendence/getAll`);
         if (response.data.success) {
           setAttendanceRecords(response.data.attendance);
+
 
           const uniqueEnrollments = [
             ...new Set(response.data.attendance.map((item) => item.enrollmentNo)),
@@ -40,43 +45,46 @@ const ViewTotalAttendance = () => {
       }
     };
 
-    const fetchBranches = async () => {
-      try {
-        const response = await axios.get(`${baseApiURL()}/branch/getBranch`);
-        if (response.data.success) {
-          const branchNames = response.data.branches.map((b) => b.name);
-          setBranches(branchNames);
-        }
-      } catch (err) {
-        console.error("Error fetching branches:", err);
-      }
-    };
-
     fetchAttendance();
-    fetchBranches();
+    
   }, []);
 
   useEffect(() => {
+  // Filter subjects by branch and semester
+  if (selectedBranch && selectedSemester) {
+    const filtered = allSubjects.filter(
+      (subject) =>
+        subject.branch?.name === selectedBranch &&
+        String(subject.semester) === String(selectedSemester)
+    );
+    setFilteredSubjects(filtered);
+    setSubjects(filtered.map((item) => item.name));
+    // Also update subjectTotals for filtered subjects only
+    const subjectData = filtered.reduce((acc, item) => {
+      acc[item.name] = item.total;
+      return acc;
+    }, {});
+    setSubjectTotals(subjectData);
+  } else {
+    setFilteredSubjects([]);
+    setSubjects([]);
+    setSubjectTotals({});
+  }
+}, [selectedBranch, selectedSemester, allSubjects]);
+
+  useEffect(() => {
     const fetchSubjectData = async () => {
-      try {
-        const response = await axios.get(`${baseApiURL()}/subject/getSubject`);
-        if (response.data && response.data.success) {
-          const subjectData = response.data.subject.reduce((acc, item) => {
-            acc[item.name] = item.total;
-            return acc;
-          }, {});
-          setSubjectTotals(subjectData);
-
-          const subjectList = response.data.subject.map((item) => item.name);
-          setSubjects(subjectList);
-        }
-      } catch (error) {
-        console.error("Error fetching subject totals:", error);
+    try {
+      const response = await axios.get(`${baseApiURL()}/subject/getSubject`);
+      if (response.data && response.data.success) {
+        setAllSubjects(response.data.subject);
       }
-    };
-
-    fetchSubjectData();
-  }, []);
+    } catch (error) {
+      console.error("Error fetching subject totals:", error);
+    }
+  };
+  fetchSubjectData();
+}, []);
 
   useEffect(() => {
     if (attendanceRecords.length > 0 && Object.keys(subjectTotals).length > 0) {
