@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { baseApiURL } from "../../../baseUrl";
 import toast from "react-hot-toast";
-import { FiDownload, FiUsers, FiSearch } from "react-icons/fi";
+import { FiDownload, FiUsers, FiSearch, FiTrash2 } from "react-icons/fi";
 
 const ViewStudents = () => {
   const [students, setStudents] = useState([]);
@@ -24,7 +24,6 @@ const ViewStudents = () => {
       .then((response) => {
         if (response.data.success) {
           setBranch(response.data.branches);
-          console.log(response.data.branches);
         } else {
           toast.error(response.data.message);
         }
@@ -83,32 +82,51 @@ const ViewStudents = () => {
       });
   }, []);
 
-  // ...existing code...
-useEffect(() => {
-  let filtered = students.filter((student) => {
-    const matchesBranch = selectedBranch === "-- Select --" || student.branch === selectedBranch;
-    const matchesSemester =
-      semester === "-- Select --" ||
-      String(student.semester) === semester; // Ensure both are strings for comparison
-    const matchesSearch =
-      searchTerm === "" ||
-      student.enrollmentNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `${student.firstName} ${student.middleName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (student.email && student.email.toLowerCase().includes(searchTerm.toLowerCase()));
+  useEffect(() => {
+    let filtered = students.filter((student) => {
+      const matchesBranch = selectedBranch === "-- Select --" || student.branch === selectedBranch;
+      const matchesSemester =
+        semester === "-- Select --" ||
+        String(student.semester) === semester;
+      const matchesSearch =
+        searchTerm === "" ||
+        student.enrollmentNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${student.firstName} ${student.middleName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (student.email && student.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    return matchesBranch && matchesSemester && matchesSearch;
-  });
+      return matchesBranch && matchesSemester && matchesSearch;
+    });
 
-  // Sort by enrollment number
-  filtered.sort((a, b) => {
-    const aNum = parseInt(a.enrollmentNo);
-    const bNum = parseInt(b.enrollmentNo);
-    return sortOrder === "Ascending" ? aNum - bNum : bNum - aNum;
-  });
+    filtered.sort((a, b) => {
+      const aNum = parseInt(a.enrollmentNo);
+      const bNum = parseInt(b.enrollmentNo);
+      return sortOrder === "Ascending" ? aNum - bNum : bNum - aNum;
+    });
 
-  setFilteredStudents(filtered);
-}, [students, selectedBranch, semester, sortOrder, searchTerm]);
-// ...existing code...
+    setFilteredStudents(filtered);
+  }, [students, selectedBranch, semester, sortOrder, searchTerm]);
+
+  // Delete student handler
+  const handleDeleteStudent = async (enrollmentNo) => {
+    if (!window.confirm("Are you sure you want to delete this student?")) return;
+    try {
+      const headers = { "Content-Type": "application/json" };
+      // Backend route: /student/details/delete/:enrollmentNo
+      const response = await axios.delete(
+        `${baseApiURL()}/student/details/delete/${enrollmentNo}`,
+        { headers }
+      );
+      if (response.data.success) {
+        toast.success("Student deleted successfully!");
+        setStudents((prev) => prev.filter((s) => s.enrollmentNo !== enrollmentNo));
+        setFilteredStudents((prev) => prev.filter((s) => s.enrollmentNo !== enrollmentNo));
+      } else {
+        toast.error(response.data.message || "Failed to delete student.");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete student.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
@@ -243,6 +261,7 @@ useEffect(() => {
                       <th className="py-4 px-6 text-left font-semibold">Semester</th>
                       <th className="py-4 px-6 text-left font-semibold">Branch</th>
                       <th className="py-4 px-6 text-left font-semibold">Gender</th>
+                      <th className="py-4 px-6 text-left font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -277,6 +296,16 @@ useEffect(() => {
                           }`}>
                             {student.gender}
                           </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <button
+                            onClick={() => handleDeleteStudent(student.enrollmentNo)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1"
+                            title="Delete Student"
+                          >
+                            <FiTrash2 />
+                            Delete
+                          </button>
                         </td>
                       </tr>
                     ))}
