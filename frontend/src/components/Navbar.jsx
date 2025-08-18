@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FiLogOut, FiMenu, FiX, FiUser, FiBell } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
-import sphnLogo from "./2.jpeg";
+import sphnLogo from "./../../public/sphn.jpg"; // Use your actual logo path
 
 const Navbar = () => {
   const router = useLocation();
@@ -12,7 +12,7 @@ const Navbar = () => {
   return (
     <nav className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 shadow-2xl border-b border-blue-500/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap justify-between items-center h-20">
+        <div className="flex justify-between items-center h-20 w-full">
           {/* Logo Section */}
           <div className="flex items-center space-x-4">
             <img
@@ -30,8 +30,8 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex flex-1 justify-center items-center space-x-6">
+          {/* Center Dashboard */}
+          <div className="hidden md:flex items-center space-x-6">
             <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
               <RxDashboard className="text-blue-300 text-lg" />
               <span className="text-white font-medium">
@@ -40,7 +40,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* User Profile & Logout */}
+          {/* Profile & Logout */}
           <div className="hidden md:flex items-center space-x-6">
             <button className="relative p-2 text-blue-200 hover:text-white transition-colors">
               <FiBell className="text-xl" />
@@ -55,7 +55,7 @@ const Navbar = () => {
               </span>
             </div>
             <button
-              className="inline-flex items-center px-6 py-3 text-sm font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="inline-flex items-center px-6 py-3 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 shadow-lg"
               onClick={() => navigate("/")}
             >
               <FiLogOut className="mr-2 h-4 w-4" />
@@ -94,7 +94,7 @@ const Navbar = () => {
                   </span>
                 </div>
                 <button
-                  className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-200"
+                  className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200"
                   onClick={() => navigate("/")}
                 >
                   <FiLogOut className="mr-2 h-4 w-4" />
