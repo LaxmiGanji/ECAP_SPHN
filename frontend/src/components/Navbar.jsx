@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FiLogOut, FiMenu, FiX, FiUser, FiBell } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
-import sphnLogo from "./../../public/sphn.jpg"; // Use your actual logo path
+import sphnLogo from "./sphn.png"; // Use your actual logo path
 
 const Navbar = () => {
   const router = useLocation();
