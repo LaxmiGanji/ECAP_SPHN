@@ -106,20 +106,20 @@ const ViewStudents = () => {
     setFilteredStudents(filtered);
   }, [students, selectedBranch, semester, sortOrder, searchTerm]);
 
-  // Delete student handler
-  const handleDeleteStudent = async (enrollmentNo) => {
+  // Delete student handler (use _id, not enrollmentNo)
+  const handleDeleteStudent = async (id) => {
     if (!window.confirm("Are you sure you want to delete this student?")) return;
     try {
       const headers = { "Content-Type": "application/json" };
-      // Backend route: /student/details/delete/:enrollmentNo
+      // Backend route: /student/details/delete/:id
       const response = await axios.delete(
-        `${baseApiURL()}/student/details/delete/${enrollmentNo}`,
+        `${baseApiURL()}/student/details/delete/${id}`,
         { headers }
       );
       if (response.data.success) {
         toast.success("Student deleted successfully!");
-        setStudents((prev) => prev.filter((s) => s.enrollmentNo !== enrollmentNo));
-        setFilteredStudents((prev) => prev.filter((s) => s.enrollmentNo !== enrollmentNo));
+        setStudents((prev) => prev.filter((s) => s._id !== id));
+        setFilteredStudents((prev) => prev.filter((s) => s._id !== id));
       } else {
         toast.error(response.data.message || "Failed to delete student.");
       }
@@ -267,7 +267,7 @@ const ViewStudents = () => {
                   <tbody>
                     {filteredStudents.map((student, index) => (
                       <tr 
-                        key={student.enrollmentNo} 
+                        key={student._id} 
                         className={`border-b hover:bg-blue-50 transition-colors ${
                           index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                         }`}
@@ -299,7 +299,7 @@ const ViewStudents = () => {
                         </td>
                         <td className="py-4 px-6">
                           <button
-                            onClick={() => handleDeleteStudent(student.enrollmentNo)}
+                            onClick={() => handleDeleteStudent(student._id)}
                             className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1"
                             title="Delete Student"
                           >
