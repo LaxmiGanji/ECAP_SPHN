@@ -15,7 +15,7 @@ const facultyDetails = new mongoose.Schema({
   },
   lastName: {
     type: String,
-    required: true,
+    required: false,
   },
   email: {
     type: String,
@@ -31,7 +31,7 @@ const facultyDetails = new mongoose.Schema({
   },
   gender: {
     type: String,
-    required: true,
+    required: false,
   },
   experience: {
     type: Number,
@@ -39,19 +39,19 @@ const facultyDetails = new mongoose.Schema({
   },
   post: {
     type: String,
-    required: true,
+    required: false,
   },
   panCard: {
     type: String,
-    required: true,
+    required: false,
   },
   jntuId: {
     type: String,
-    required: true,
+    required: false,
   },
   aicteId: {
     type: String,
-    required: true,
+    required: false,
   },
   profile: {
     type: String,
@@ -59,15 +59,41 @@ const facultyDetails = new mongoose.Schema({
   },
   timetable: {
     type: [{
-      day: String,
+      day: {
+        type: String,
+        enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        required: true
+      },
       periods: [{
-        periodNumber: Number,
-        subject: String,
-        branch: String,
-        semester: String,
-        section: String,
-        startTime: String,
-        endTime: String
+        periodNumber: {
+          type: Number,
+          required: true,
+          min: 1
+        },
+        subject: {
+          type: String,
+          required: true
+        },
+        branch: {
+          type: String,
+          required: true
+        },
+        semester: {
+          type: String,
+          required: true
+        },
+        section: {
+          type: String,
+          required: true
+        },
+        startTime: {
+          type: String,
+          required: true
+        },
+        endTime: {
+          type: String,
+          required: true
+        }
       }]
     }],
     required: false,

@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { baseApiURL } from "../../baseUrl";
+import ViewFacultyTimetable from "./ViewFacultyTimetable.jsx";
 
 const FacultyTimetable = () => {
   const [selectedTab, setSelectedTab] = useState("view");
@@ -17,6 +18,7 @@ const FacultyTimetable = () => {
     Friday: [],
     Saturday: [],
   });
+  const [loading, setLoading] = useState(false);
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -33,6 +35,7 @@ const FacultyTimetable = () => {
   }, [selectedFaculty]);
 
   const getFacultyData = () => {
+    setLoading(true);
     axios
       .get(`${baseApiURL()}/faculty/details/getDetails2`)
       .then((res) => {
@@ -45,7 +48,8 @@ const FacultyTimetable = () => {
       .catch((err) => {
         console.error(err);
         toast.error("Failed to fetch faculty data");
-      });
+      })
+      .finally(() => setLoading(false));
   };
 
   const getSubjectData = () => {
@@ -81,11 +85,11 @@ const FacultyTimetable = () => {
   };
 
   const loadFacultyTimetable = () => {
+    setLoading(true);
     axios
       .post(`${baseApiURL()}/faculty/details/getDetails`, { employeeId: selectedFaculty })
       .then((res) => {
-        if (res.data.success && res.data.user[0].timetable) {
-          // Convert the stored timetable format to our local state format
+        if (res.data.success && res.data.user[0]?.timetable) {
           const newTimetable = {
             Monday: [],
             Tuesday: [],
@@ -114,7 +118,8 @@ const FacultyTimetable = () => {
       .catch((err) => {
         console.error(err);
         toast.error("Failed to load faculty timetable");
-      });
+      })
+      .finally(() => setLoading(false));
   };
 
   const addPeriod = (day) => {
@@ -162,35 +167,51 @@ const FacultyTimetable = () => {
       return;
     }
 
-    // Convert our timetable format to the storage format
+    // Convert to backend format
     const timetableToSave = Object.entries(timetable)
       .filter(([_, periods]) => periods.length > 0)
       .map(([day, periods]) => ({
         day,
         periods: periods.filter(period => 
-          period.subject && period.branch && period.semester && period.section && period.startTime && period.endTime
+          period.subject && 
+          period.branch && 
+          period.semester && 
+          period.section && 
+          period.startTime && 
+          period.endTime
         )
       }));
 
-    // Validate that all required fields are filled for active periods
-    const isValid = timetableToSave.every(dayData => 
-      dayData.periods.every(period => 
-        period.subject && period.branch && period.semester && period.section && period.startTime && period.endTime
+    // Validate all required fields
+    const hasEmptyFields = timetableToSave.some(dayData => 
+      dayData.periods.some(period => 
+        !period.subject || 
+        !period.branch || 
+        !period.semester || 
+        !period.section || 
+        !period.startTime || 
+        !period.endTime
       )
     );
 
-    if (!isValid) {
+    if (hasEmptyFields) {
       toast.error("Please fill all fields for all active periods");
       return;
     }
 
     toast.loading("Saving Faculty Timetable");
     axios
-      .put(`${baseApiURL()}/faculty/details/updateTimetable/${selectedFaculty}`, { timetable: timetableToSave })
+      .put(`${baseApiURL()}/faculty/details/updateTimetable/${selectedFaculty}`, { 
+        timetable: timetableToSave 
+      })
       .then((res) => {
         toast.dismiss();
         if (res.data.success) {
           toast.success("Faculty timetable updated successfully");
+          // Reload the timetable to ensure consistency
+          loadFacultyTimetable();
+          // Switch back to view mode
+          setSelectedTab("view");
         } else {
           toast.error(res.data.message);
         }
@@ -198,9 +219,17 @@ const FacultyTimetable = () => {
       .catch((err) => {
         toast.dismiss();
         console.error(err);
-        toast.error("Failed to save faculty timetable");
+        toast.error(err.response?.data?.message || "Failed to save faculty timetable");
       });
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
@@ -253,6 +282,7 @@ const FacultyTimetable = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 value={selectedFaculty}
                 onChange={(e) => setSelectedFaculty(e.target.value)}
+                disabled={loading}
               >
                 <option value="">Select Faculty</option>
                 {faculties.map((faculty) => (
@@ -264,50 +294,7 @@ const FacultyTimetable = () => {
             </div>
 
             {selectedTab === "view" && selectedFaculty && (
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900 border-b">
-                          Day/Period
-                        </th>
-                        {Array.from({ length: Math.max(...daysOfWeek.map(day => timetable[day].length), 1) }).map((_, i) => (
-                          <th key={i} className="py-4 px-6 text-center text-sm font-semibold text-gray-900 border-b">
-                            Period {i + 1}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {daysOfWeek.map((day) => (
-                        <tr key={day} className="hover:bg-gray-50">
-                          <td className="py-4 px-6 font-semibold text-gray-900 text-center">
-                            {day}
-                          </td>
-                          {timetable[day].map((period, index) => (
-                            <td key={index} className="py-4 px-6">
-                              {period.subject ? (
-                                <div className="bg-blue-50 p-3 rounded-lg">
-                                  <div className="font-medium">{period.subject}</div>
-                                  <div className="text-sm text-gray-600">
-                                    {period.branch} - Sem {period.semester} Sec {period.section}
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    {period.startTime} - {period.endTime}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="text-gray-400 text-sm">No class</div>
-                              )}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <ViewFacultyTimetable facultyId={selectedFaculty} />
             )}
 
             {selectedTab === "edit" && selectedFaculty && (
@@ -445,8 +432,9 @@ const FacultyTimetable = () => {
                   <button
                     className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                     onClick={saveFacultyTimetable}
+                    disabled={loading}
                   >
-                    Save Faculty Timetable
+                    {loading ? 'Saving...' : 'Save Faculty Timetable'}
                   </button>
                 </div>
               </div>
