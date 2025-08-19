@@ -256,6 +256,7 @@ const AddAttendance = () => {
     getSubjectData();
   }, []);
 
+
   // Filter students based on filters
   useEffect(() => {
     filterStudents();
@@ -286,9 +287,21 @@ const AddAttendance = () => {
       );
     }
 
-    filtered.sort((a, b) => a.enrollmentNo - b.enrollmentNo);
+    // Sort enrollment numbers in ascending order
+    filtered.sort((a, b) => {
+      // If enrollmentNo is string, compare as numbers if possible
+      const aNum = Number(a.enrollmentNo);
+      const bNum = Number(b.enrollmentNo);
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return aNum - bNum;
+      }
+      // Otherwise, compare as strings
+      return String(a.enrollmentNo).localeCompare(String(b.enrollmentNo));
+    });
+
     setFilteredStudents(filtered);
   };
+
 
   // Toggle individual attendance (local state only)
   const toggleAttendance = (student) => {
