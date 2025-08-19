@@ -326,6 +326,7 @@ const ViewTotalAttendance = () => {
         </button>
       </div>
 
+
       <table className="min-w-full table-auto">
         <thead className="bg-gray-200">
           <tr>
@@ -341,6 +342,7 @@ const ViewTotalAttendance = () => {
         </thead>
         <tbody>
           {Object.entries(studentSubjectSummary)
+            // Sort enrollment numbers in ascending order
             .sort(([studentA], [studentB]) => {
               const numA = parseInt(studentA, 10);
               const numB = parseInt(studentB, 10);
