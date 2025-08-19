@@ -4,8 +4,6 @@ import axios from "axios";
 import { baseApiURL } from "../../baseUrl";
 
 const ViewAttendance = () => {
-  const [totalAttendance, setTotalAttendance] = useState(0);
-  const [uniqueDaysPresent, setUniqueDaysPresent] = useState(0);
   const [enrollmentNo, setEnrollmentNo] = useState("");
   const [subjectTotals, setSubjectTotals] = useState({});
   const [attendanceBySubject, setAttendanceBySubject] = useState({});
@@ -26,13 +24,9 @@ const ViewAttendance = () => {
         if (response.data?.success) {
           const fetchedEnrollmentNo = response.data.user?.[0]?.enrollmentNo || "";
           setEnrollmentNo(fetchedEnrollmentNo);
-        } else {
-          console.error("API Error (Enrollment Details):", response.data?.message || "Unknown error");
         }
       })
-      .catch((error) => {
-        console.error("Error fetching enrollment details:", error);
-      });
+      .catch(() => {});
   }, [router.state.type, router.state.loginid]);
 
   // Fetch subject totals
@@ -42,17 +36,12 @@ const ViewAttendance = () => {
         const response = await axios.get(`${baseApiURL()}/subject/getSubject`);
         if (response.data?.success) {
           const subjectData = response.data.subject.reduce((acc, item) => {
-            acc[item.name] = item.total; // Store total classes per subject
+            acc[item.name] = item.total;
             return acc;
           }, {});
           setSubjectTotals(subjectData);
-          console.log("Subject Totals:", subjectData); // Debug
-        } else {
-          console.error("API Error (Subject Totals):", response.data?.message || "Unknown error");
         }
-      } catch (error) {
-        console.error("Error fetching subject totals:", error);
-      }
+      } catch {}
     };
 
     fetchSubjectTotals();
@@ -65,13 +54,12 @@ const ViewAttendance = () => {
 
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/attendence/getStudentAttendance/${enrollmentNo}`
+          `${baseApiURL()}/attendence/getStudentAttendance/${enrollmentNo}`
         );
         if (response.data?.success) {
           const sortedRecords = response.data.attendanceRecords.sort(
             (a, b) => new Date(b.date) - new Date(a.date)
           );
-          setTotalAttendance(response.data.totalAttendance || 0);
 
           // Group attendance by subject
           const attendanceGrouped = sortedRecords.reduce((acc, record) => {
@@ -80,31 +68,13 @@ const ViewAttendance = () => {
             return acc;
           }, {});
           setAttendanceBySubject(attendanceGrouped);
-          console.log("Grouped Attendance by Subject:", attendanceGrouped); // Debug
-
-          // Calculate unique days present
-          const attendanceByDate = sortedRecords.reduce((acc, record) => {
-            const dateKey = new Date(record.date).toISOString().split("T")[0];
-            acc[dateKey] = (acc[dateKey] || 0) + 1;
-            return acc;
-          }, {});
-
-          const qualifyingDays = Object.values(attendanceByDate).filter(
-            (periodCount) => periodCount >= 7
-          ).length;
-
-          setUniqueDaysPresent(qualifyingDays);
 
           // Calculate overall attendance percentage after subject totals are fetched
           if (Object.keys(subjectTotals).length > 0) {
             calculateOverallAttendance(attendanceGrouped, subjectTotals);
           }
-        } else {
-          console.error("API Error (Attendance Data):", response.data?.message || "Unknown error");
         }
-      } catch (error) {
-        console.error("Error fetching attendance:", error);
-      }
+      } catch {}
     };
 
     fetchAttendance();
@@ -116,7 +86,7 @@ const ViewAttendance = () => {
     let totalClassesAvailable = 0;
 
     Object.keys(attendanceGrouped).forEach((subject) => {
-      if (totals[subject]) { // Only consider subjects with recorded attendance
+      if (totals[subject]) {
         totalClassesAttended += attendanceGrouped[subject].length;
         totalClassesAvailable += totals[subject];
       }
@@ -126,10 +96,6 @@ const ViewAttendance = () => {
       totalClassesAvailable > 0
         ? ((totalClassesAttended / totalClassesAvailable) * 100).toFixed(2)
         : "N/A";
-
-    console.log("Total Classes Attended:", totalClassesAttended); // Debug
-    console.log("Total Classes Available:", totalClassesAvailable); // Debug
-    console.log("Overall Attendance Percentage:", overallPercentage); // Debug
 
     setOverallAttendancePercentage(overallPercentage);
   };
@@ -143,11 +109,7 @@ const ViewAttendance = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-lg font-semibold mb-4">Total Attendance</h2>
-      <p className="mb-2">Total Classes Attended: {totalAttendance}</p>
-      <p className="mb-4">Total Days Present: {uniqueDaysPresent}</p>
-
-      <h3 className="text-lg font-semibold mb-4">Attendance Details by Subject</h3>
+      <h2 className="text-lg font-semibold mb-4">Your Attendance</h2>
       {Object.keys(attendanceBySubject).length > 0 ? (
         <table className="w-full border-collapse border border-gray-300">
           <thead>
@@ -188,3 +150,4 @@ const ViewAttendance = () => {
 };
 
 export default ViewAttendance;
+
