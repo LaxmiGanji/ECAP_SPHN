@@ -21,6 +21,7 @@ const AddAttendance = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
+  const [canAddAttendance, setCanAddAttendance] = useState(false);
 
   // Sections available for filtering
   const sections = ['A', 'B', 'C', 'D'];
@@ -72,6 +73,7 @@ const AddAttendance = () => {
       setSelectedSubject("-- Select --");
       setSelectedSubjectId(null);
       setTotalClasses("");
+      setCanAddAttendance(false);
       return;
     }
 
@@ -81,9 +83,26 @@ const AddAttendance = () => {
         subject.branch?.name === selectedBranch
     );
     setFilteredSubjects(semesterSubjects);
-    setSelectedSubject("-- Select --");
-    setSelectedSubjectId(null);
-    setTotalClasses("");
+    
+    // If we had a subject selected before, try to preserve it
+    if (selectedSubject !== "-- Select --") {
+      const preservedSubject = semesterSubjects.find(sub => sub.name === selectedSubject);
+      if (preservedSubject) {
+        setSelectedSubjectId(preservedSubject._id);
+        setTotalClasses(preservedSubject.total);
+        setCanAddAttendance(false);
+      } else {
+        setSelectedSubject("-- Select --");
+        setSelectedSubjectId(null);
+        setTotalClasses("");
+        setCanAddAttendance(false);
+      }
+    } else {
+      setSelectedSubject("-- Select --");
+      setSelectedSubjectId(null);
+      setTotalClasses("");
+      setCanAddAttendance(false);
+    }
   };
 
   // Handle semester change
@@ -113,6 +132,7 @@ const AddAttendance = () => {
     if (selectedValue === "-- Select --") {
       setSelectedSubjectId(null);
       setTotalClasses("");
+      setCanAddAttendance(false);
       return;
     }
 
@@ -120,23 +140,27 @@ const AddAttendance = () => {
     if (subject) {
       setSelectedSubjectId(subject._id);
       setTotalClasses(subject.total);
+      setCanAddAttendance(false);
     } else {
       setSelectedSubjectId(null);
       setTotalClasses("");
+      setCanAddAttendance(false);
     }
   };
 
-  // Replace the updateTotalClasses function to accept a value
+  // Update total classes and enable attendance marking
   const updateTotalClasses = (newTotal) => {
     if (!selectedSubjectId || newTotal === undefined) {
       toast.error("Please select a subject and enter total classes");
       return;
     }
+    
     const subject = filteredSubjects.find(sub => sub._id === selectedSubjectId);
     if (!subject) {
       toast.error("Subject not found");
       return;
     }
+    
     setLoading(true);
     toast.loading("Updating total classes...");
     axios
@@ -145,13 +169,25 @@ const AddAttendance = () => {
         code: subject.code,
         total: Number(newTotal),
         semester: subject.semester,
+        branch: subject.branch
       })
       .then((response) => {
         toast.dismiss();
         setLoading(false);
         if (response.data.success) {
           toast.success("Total classes updated successfully!");
-          getSubjectData();
+          setCanAddAttendance(true);
+          
+          // Update the local state without refetching all subjects
+          const updatedSubjects = subjects.map(sub => 
+            sub._id === selectedSubjectId ? {...sub, total: Number(newTotal)} : sub
+          );
+          setSubjects(updatedSubjects);
+          
+          const updatedFilteredSubjects = filteredSubjects.map(sub => 
+            sub._id === selectedSubjectId ? {...sub, total: Number(newTotal)} : sub
+          );
+          setFilteredSubjects(updatedFilteredSubjects);
         } else {
           toast.error(response.data.message);
         }
@@ -162,6 +198,34 @@ const AddAttendance = () => {
         toast.error("Failed to update total classes");
         console.error("Update error:", error.response?.data || error.message);
       });
+  };
+
+  // Increment total classes and enable attendance
+  const incrementTotalClasses = () => {
+    if (!selectedSubjectId) {
+      toast.error("Please select a subject first");
+      return;
+    }
+    
+    const newTotal = Number(totalClasses) + 1;
+    setTotalClasses(newTotal);
+    updateTotalClasses(newTotal);
+  };
+
+  // Decrement total classes and disable attendance if needed
+  const decrementTotalClasses = () => {
+    if (!selectedSubjectId || Number(totalClasses) <= 0) {
+      return;
+    }
+    
+    const newTotal = Number(totalClasses) - 1;
+    setTotalClasses(newTotal);
+    updateTotalClasses(newTotal);
+    
+    // If we're decrementing to 0, disable attendance
+    if (newTotal === 0) {
+      setCanAddAttendance(false);
+    }
   };
 
   // Fetch student data
@@ -226,8 +290,13 @@ const AddAttendance = () => {
     setFilteredStudents(filtered);
   };
 
-  // Toggle individual attendance - FIXED VERSION
+  // Toggle individual attendance
   const toggleAttendance = (student) => {
+    if (!canAddAttendance) {
+      toast.error("Please increment total classes first to enable attendance marking");
+      return;
+    }
+    
     if (selectedSubject === "-- Select --" || selectedPeriod === "-- Select --") {
       toast.error("Please select both a subject and period.");
       return;
@@ -328,6 +397,11 @@ const AddAttendance = () => {
 
   // Toggle select all attendance
   const toggleSelectAll = () => {
+    if (!canAddAttendance) {
+      toast.error("Please increment total classes first to enable attendance marking");
+      return;
+    }
+    
     if (selectedSubject === "-- Select --" || selectedPeriod === "-- Select --") {
       toast.error("Please select both a subject and period.");
       return;
@@ -507,30 +581,14 @@ const AddAttendance = () => {
         </div>
         <div className="flex flex-col space-y-2">
           <button
-            onClick={() => {
-              if (selectedSubjectId) {
-                setTotalClasses(prev => {
-                  const newVal = Number(prev) + 1;
-                  updateTotalClasses(newVal);
-                  return newVal;
-                });
-              }
-            }}
+            onClick={incrementTotalClasses}
             disabled={!selectedSubjectId || loading}
             className={`px-3 py-2 rounded text-white ${!selectedSubjectId || loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
           >
             +
           </button>
           <button
-            onClick={() => {
-              if (selectedSubjectId && Number(totalClasses) > 0) {
-                setTotalClasses(prev => {
-                  const newVal = Number(prev) - 1;
-                  updateTotalClasses(newVal);
-                  return newVal;
-                });
-              }
-            }}
+            onClick={decrementTotalClasses}
             disabled={!selectedSubjectId || loading || Number(totalClasses) <= 0}
             className={`px-3 py-2 rounded text-white ${!selectedSubjectId || loading || Number(totalClasses) <= 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
           >
@@ -539,12 +597,19 @@ const AddAttendance = () => {
         </div>
       </div>
 
+      {/* Status indicator */}
+      {canAddAttendance && (
+        <div className="mb-4 p-2 bg-green-100 text-green-800 rounded">
+          ✓ Attendance marking is enabled. You can now mark attendance for students.
+        </div>
+      )}
+
       {/* Bulk Actions */}
       <div className="mb-6 flex space-x-4">
         <button
           onClick={toggleSelectAll}
-          disabled={selectedSubject === "-- Select --" || selectedPeriod === "-- Select --" || loading}
-          className={`px-4 py-2 rounded text-white ${selectedSubject === "-- Select --" || selectedPeriod === "-- Select --" || loading ? 'bg-gray-400 cursor-not-allowed' : selectAllChecked ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+          disabled={!canAddAttendance || selectedSubject === "-- Select --" || selectedPeriod === "-- Select --" || loading}
+          className={`px-4 py-2 rounded text-white ${!canAddAttendance || selectedSubject === "-- Select --" || selectedPeriod === "-- Select --" || loading ? 'bg-gray-400 cursor-not-allowed' : selectAllChecked ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
         >
           {loading ? 'Processing...' : selectAllChecked ? 'Unmark All' : 'Mark All'}
         </button>
@@ -573,7 +638,7 @@ const AddAttendance = () => {
                   type="checkbox"
                   checked={selectAllChecked}
                   onChange={toggleSelectAll}
-                  disabled={selectedSubject === "-- Select --" || selectedPeriod === "-- Select --"}
+                  disabled={!canAddAttendance || selectedSubject === "-- Select --" || selectedPeriod === "-- Select --"}
                 />
               </th>
               <th className="border border-gray-300 px-4 py-2">Enrollment No</th>
@@ -591,7 +656,7 @@ const AddAttendance = () => {
                     type="checkbox"
                     checked={!!markedAttendance[student.enrollmentNo]}
                     onChange={() => toggleAttendance(student)}
-                    disabled={selectedSubject === "-- Select --" || selectedPeriod === "-- Select --"}
+                    disabled={!canAddAttendance || selectedSubject === "-- Select --" || selectedPeriod === "-- Select --"}
                   />
                 </td>
                 <td className="border border-gray-300 px-4 py-2">

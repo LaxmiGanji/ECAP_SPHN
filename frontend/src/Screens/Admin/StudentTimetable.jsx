@@ -38,14 +38,12 @@ const StudentTimetable = () => {
           subject.branch?.name === selected.branch
       );
       setFilteredSubjects(filtered);
-      
-      // Clear subject selections in schedule when branch/semester changes
       setSchedule(prev => {
         const newSchedule = { ...prev };
         Object.keys(newSchedule).forEach(day => {
           newSchedule[day] = newSchedule[day].map(period => ({
             ...period,
-            subject: "" // Clear subject selection
+            subject: ""
           }));
         });
         return newSchedule;
@@ -165,7 +163,13 @@ const StudentTimetable = () => {
 
       if (activePeriods.length > 0) {
         activePeriods.forEach(period => {
-          if (!period.subject || !period.faculty || !period.startTime || !period.endTime) {
+          // For Break, Sports, Library, faculty can be empty
+          if (
+            !period.subject ||
+            (!["Break", "Sports", "Library"].includes(period.subject) && !period.faculty) ||
+            !period.startTime ||
+            !period.endTime
+          ) {
             allPeriodsValid = false;
             toast.error(`Please fill all fields for active periods on ${day}.`);
             return;
@@ -387,6 +391,11 @@ const StudentTimetable = () => {
                                           ? "No Subjects Available" 
                                           : "Select Subject"}
                                     </option>
+                                    {/* Special periods */}
+                                    <option value="Break">Break</option>
+                                    <option value="Sports">Sports</option>
+                                    <option value="Library">Library</option>
+                                    {/* Academic subjects */}
                                     {filteredSubjects.map((subj) => (
                                       <option key={subj._id} value={subj.name}>
                                         {subj.name} ({subj.code})
@@ -399,6 +408,9 @@ const StudentTimetable = () => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     value={schedule[day][index]?.faculty || ""}
                                     onChange={(e) => updatePeriod(day, index, "faculty", e.target.value)}
+                                    disabled={
+                                      ["Break", "Sports", "Library"].includes(schedule[day][index]?.subject)
+                                    }
                                   >
                                     <option value="">Select Faculty</option>
                                     {faculties.map((f) => (
