@@ -79,6 +79,22 @@ const RoleSelection = () => {
           },
         }}
       />
+      <div
+        style={{
+          position: "fixed",
+          right: "12px",
+          bottom: "8px",
+          opacity: 0.18,
+          fontSize: "0.95rem",
+          color: "#1e293b",
+          pointerEvents: "none",
+          zIndex: 50,
+          fontWeight: "bold",
+          fontFamily: "monospace",
+        }}
+      >
+        developed by laxmi
+      </div>
     </div>
   );
 };
