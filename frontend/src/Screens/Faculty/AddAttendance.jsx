@@ -290,161 +290,103 @@ const AddAttendance = () => {
     setFilteredStudents(filtered);
   };
 
-  // Toggle individual attendance
+  // Toggle individual attendance (local state only)
   const toggleAttendance = (student) => {
     if (!canAddAttendance) {
       toast.error("Please increment total classes first to enable attendance marking");
       return;
     }
-    
     if (selectedSubject === "-- Select --" || selectedPeriod === "-- Select --") {
       toast.error("Please select both a subject and period.");
       return;
     }
-
-    const isCurrentlyMarked = !!markedAttendance[student.enrollmentNo];
-    const url = isCurrentlyMarked
-      ? `${baseApiURL()}/attendence/remove`
-      : `${baseApiURL()}/attendence/add`;
-
-    const attendanceData = {
-      enrollmentNo: student.enrollmentNo,
-      name: `${student.firstName} ${student.lastName}`,
-      branch: student.branch,
-      section: student.section,
-      subject: selectedSubject,
-      period: selectedPeriod,
-      semester: semester,
-      date: selectedDate,
-    };
-
-    setLoading(true);
-    axios
-      .post(url, attendanceData)
-      .then((response) => {
-        setLoading(false);
-        if (response.data.success) {
-          setMarkedAttendance((prev) => {
-            const newState = { ...prev };
-            if (isCurrentlyMarked) {
-              // Remove from state
-              delete newState[student.enrollmentNo];
-            } else {
-              // Add to state
-              newState[student.enrollmentNo] = attendanceData;
-            }
-            return newState;
-          });
-          
-          // Update selectAllChecked based on current state
-          const allStudentsMarked = filteredStudents.every(s => 
-            isCurrentlyMarked ? 
-              (s.enrollmentNo !== student.enrollmentNo && markedAttendance[s.enrollmentNo]) :
-              (s.enrollmentNo === student.enrollmentNo || markedAttendance[s.enrollmentNo])
-          );
-          setSelectAllChecked(allStudentsMarked);
-          
-          toast.success(
-            `${isCurrentlyMarked ? "Removed" : "Added"} attendance for ${student.firstName}`
-          );
-        } else {
-          toast.error(response.data.message);
-        }
-      })
-      .catch((error) => {
-        setLoading(false);
-        toast.error(`Failed to ${isCurrentlyMarked ? "remove" : "add"} attendance`);
-        console.error(error);
-      });
+    setMarkedAttendance((prev) => {
+      const newState = { ...prev };
+      if (newState[student.enrollmentNo]) {
+        delete newState[student.enrollmentNo];
+      } else {
+        newState[student.enrollmentNo] = {
+          enrollmentNo: student.enrollmentNo,
+          name: `${student.firstName} ${student.lastName}`,
+          branch: student.branch,
+          section: student.section,
+          subject: selectedSubject,
+          period: selectedPeriod,
+          semester: semester,
+          date: selectedDate,
+        };
+      }
+      return newState;
+    });
   };
 
-  // Remove bulk attendance
-  const removeBulkAttendance = () => {
-    if (selectedSubject === "-- Select --" || selectedPeriod === "-- Select --") {
-      toast.error("Please select both a subject and period.");
-      return;
-    }
-
-    const attendanceData = filteredStudents.map((student) => ({
-      enrollmentNo: student.enrollmentNo,
-      branch: student.branch,
-      section: student.section,
-      subject: selectedSubject,
-      period: selectedPeriod,
-      semester: semester,
-      date: selectedDate
-    }));
-
-    setLoading(true);
-    axios
-      .post(`${baseApiURL()}/attendence/removeBulk`, attendanceData)
-      .then((response) => {
-        setLoading(false);
-        if (response.data.success) {
-          setMarkedAttendance({});
-          setSelectAllChecked(false);
-          toast.success("Attendance removed for all filtered students.");
-        } else {
-          toast.error(response.data.message);
-        }
-      })
-      .catch((error) => {
-        setLoading(false);
-        toast.error("Failed to remove attendance for all students.");
-        console.error(error);
-      });
-  };
-
-  // Toggle select all attendance
+  // Mark/unmark all locally
   const toggleSelectAll = () => {
     if (!canAddAttendance) {
       toast.error("Please increment total classes first to enable attendance marking");
       return;
     }
-    
     if (selectedSubject === "-- Select --" || selectedPeriod === "-- Select --") {
       toast.error("Please select both a subject and period.");
       return;
     }
-
     const newSelectAllChecked = !selectAllChecked;
     setSelectAllChecked(newSelectAllChecked);
-
     if (newSelectAllChecked) {
-      const attendanceDataForBulk = filteredStudents.map((student) => ({
-        enrollmentNo: student.enrollmentNo,
-        name: `${student.firstName} ${student.lastName}`,
-        branch: student.branch,
-        section: student.section,
-        subject: selectedSubject,
-        period: selectedPeriod,
-        semester: semester,
-        date: selectedDate,
-      }));
-
-      setLoading(true);
-      axios
-        .post(`${baseApiURL()}/attendence/addBulk`, attendanceDataForBulk)
-        .then((response) => {
-          setLoading(false);
-          if (response.data.success) {
-            const updatedAttendance = {};
-            attendanceDataForBulk.forEach(
-              (data) => (updatedAttendance[data.enrollmentNo] = data)
-            );
-            setMarkedAttendance(updatedAttendance);
-            toast.success("Attendance marked for all students.");
-          } else {
-            toast.error(response.data.message);
-          }
-        })
-        .catch((error) => {
-          setLoading(false);
-          toast.error("Failed to mark attendance for all.");
-          console.error(error);
-        });
+      const attendanceDataForBulk = {};
+      filteredStudents.forEach((student) => {
+        attendanceDataForBulk[student.enrollmentNo] = {
+          enrollmentNo: student.enrollmentNo,
+          name: `${student.firstName} ${student.lastName}`,
+          branch: student.branch,
+          section: student.section,
+          subject: selectedSubject,
+          period: selectedPeriod,
+          semester: semester,
+          date: selectedDate,
+        };
+      });
+      setMarkedAttendance(attendanceDataForBulk);
     } else {
-      removeBulkAttendance();
+      setMarkedAttendance({});
+    }
+  };
+
+  // Submit attendance to backend
+  const handleSubmitAttendance = async () => {
+    if (!canAddAttendance) {
+      toast.error("Please increment total classes first to enable attendance marking");
+      return;
+    }
+    if (selectedSubject === "-- Select --" || selectedPeriod === "-- Select --") {
+      toast.error("Please select both a subject and period.");
+      return;
+    }
+    const attendanceArray = Object.values(markedAttendance);
+    if (attendanceArray.length === 0) {
+      toast.error("No students selected for attendance.");
+      return;
+    }
+    setLoading(true);
+    toast.loading("Submitting attendance...");
+    try {
+      const response = await axios.post(
+        `${baseApiURL()}/attendence/addBulk`,
+        attendanceArray
+      );
+      toast.dismiss();
+      setLoading(false);
+      if (response.data.success) {
+        toast.success("Attendance submitted successfully!");
+        setMarkedAttendance({});
+        setSelectAllChecked(false);
+      } else {
+        toast.error(response.data.message || "Failed to submit attendance.");
+      }
+    } catch (error) {
+      toast.dismiss();
+      setLoading(false);
+      toast.error("Failed to submit attendance.");
     }
   };
 
@@ -613,15 +555,6 @@ const AddAttendance = () => {
         >
           {loading ? 'Processing...' : selectAllChecked ? 'Unmark All' : 'Mark All'}
         </button>
-        {selectAllChecked && (
-          <button
-            onClick={removeBulkAttendance}
-            disabled={selectedSubject === "-- Select --" || selectedPeriod === "-- Select --" || loading}
-            className={`px-4 py-2 rounded text-white ${selectedSubject === "-- Select --" || selectedPeriod === "-- Select --" || loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
-          >
-            {loading ? 'Removing...' : 'Remove All'}
-          </button>
-        )}
       </div>
 
       {/* Students Table */}
@@ -673,6 +606,17 @@ const AddAttendance = () => {
           </tbody>
         </table>
       )}
+
+      {/* Submit Button */}
+      <div className="flex justify-center mt-6">
+        <button
+          onClick={handleSubmitAttendance}
+          disabled={!canAddAttendance || Object.keys(markedAttendance).length === 0 || loading}
+          className={`px-8 py-3 rounded-lg text-white font-semibold ${!canAddAttendance || Object.keys(markedAttendance).length === 0 || loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+        >
+          {loading ? "Submitting..." : "Submit Attendance"}
+        </button>
+      </div>
     </div>
   );
 };
