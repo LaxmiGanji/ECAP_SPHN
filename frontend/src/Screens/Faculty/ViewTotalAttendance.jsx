@@ -325,8 +325,7 @@ const ViewTotalAttendance = () => {
           Add to Excel Sheet
         </button>
       </div>
-
-
+      
       <table className="min-w-full table-auto">
         <thead className="bg-gray-200">
           <tr>
@@ -342,22 +341,6 @@ const ViewTotalAttendance = () => {
         </thead>
         <tbody>
           {Object.entries(studentSubjectSummary)
-            // Sort enrollment numbers in ascending order
-            .sort(([studentA], [studentB]) => {
-              const numA = parseInt(studentA, 10);
-              const numB = parseInt(studentB, 10);
-
-              if (isNaN(numA) && isNaN(numB)) {
-                return studentA.localeCompare(studentB);
-              }
-              if (isNaN(numA)) {
-                return 1;
-              }
-              if (isNaN(numB)) {
-                return -1;
-              }
-              return numA - numB;
-            })
             .flatMap(([student, subjectsData]) => {
               const rows = [];
               Object.entries(subjectsData)
@@ -413,6 +396,15 @@ const ViewTotalAttendance = () => {
                 (selectedBranch ? item.branch === selectedBranch : true) &&
                 (selectedSemester ? item.semester === parseInt(selectedSemester) : true)
             )
+            // Sort enrollment numbers in ascending order
+            .sort((a, b) => {
+              const numA = parseInt(a.student, 10);
+              const numB = parseInt(b.student, 10);
+              if (!isNaN(numA) && !isNaN(numB)) {
+                return numA - numB;
+              }
+              return a.student.localeCompare(b.student);
+            })
             .map((item, index) => (
               <tr
                 key={index}
