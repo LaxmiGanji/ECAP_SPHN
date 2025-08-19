@@ -336,6 +336,7 @@ const ViewAttendenceByDate = () => {
         </button>
       </div>
 
+
       {attendanceRecords.length === 0 ? (
         <div className="text-center mt-5">
           <p>No attendance records found for the selected filters.</p>
@@ -363,6 +364,15 @@ const ViewAttendenceByDate = () => {
                 (!selectedSection || record.section === selectedSection) &&
                 (!selectedSubject || record.subject === selectedSubject)
               )
+              // Sort enrollment numbers in ascending order
+              .sort((a, b) => {
+                const aNum = Number(a.enrollmentNo);
+                const bNum = Number(b.enrollmentNo);
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                  return aNum - bNum;
+                }
+                return String(a.enrollmentNo).localeCompare(String(b.enrollmentNo));
+              })
               .map((record) => (
                 <tr key={record._id} className="border-b">
                   <td className="py-2 px-4">{record.enrollmentNo}</td>
@@ -388,6 +398,7 @@ const ViewAttendenceByDate = () => {
           </tbody>
         </table>
       )}
+
 
       {/* Edit Modal */}
       {editModal && (
