@@ -24,6 +24,23 @@ const App = () => {
           </Routes>
         </Router>
       </Provider>
+      {/* Watermark */}
+      <div
+        style={{
+          position: "fixed",
+          right: "20px",
+          bottom: "10px",
+          opacity: 0.25,
+          fontSize: "1.2rem",
+          color: "#1e293b",
+          pointerEvents: "none",
+          zIndex: 50,
+          fontWeight: "bold",
+          fontFamily: "monospace",
+        }}
+      >
+        Developed by Laxmi
+      </div>
     </>
   );
 };
