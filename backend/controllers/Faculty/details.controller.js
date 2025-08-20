@@ -123,49 +123,37 @@ const getCount = async (req, res) => {
     }
 }
 
-// ...existing code...
-
 const updateTimetable = async (req, res) => {
   try {
+    const { timetable } = req.body;
     const employeeId = req.params.id;
-    const { branch, semester, section, days } = req.body; // days is array of { day, periods }
 
     // Validate input
-    if (!branch || !semester || !section || !Array.isArray(days)) {
+    if (!timetable || !Array.isArray(timetable)) {
       return res.status(400).json({
         success: false,
-        message: "Missing or invalid timetable data (branch, semester, section, days required)",
+        message: "Invalid timetable data format",
       });
     }
 
-    // Find faculty
-    const faculty = await facultyDetails.findOne({ employeeId });
-    if (!faculty) {
+    // Find and update the faculty's timetable
+    const updatedFaculty = await facultyDetails.findOneAndUpdate(
+      { employeeId },
+      { $set: { timetable } },
+      { new: true }
+    );
+
+    if (!updatedFaculty) {
       return res.status(404).json({
         success: false,
         message: "Faculty not found",
       });
     }
 
-    // Find if timetable for branch/semester/section exists
-    const idx = faculty.timetable.findIndex(
-      t => t.branch === branch && t.semester === semester && t.section === section
-    );
-
-    if (idx !== -1) {
-      // Update existing timetable
-      faculty.timetable[idx].days = days;
-    } else {
-      // Add new timetable
-      faculty.timetable.push({ branch, semester, section, days });
-    }
-
-    await faculty.save();
-
     res.json({
       success: true,
       message: "Timetable updated successfully",
-      faculty,
+      faculty: updatedFaculty,
     });
   } catch (error) {
     console.error(error);
@@ -177,5 +165,4 @@ const updateTimetable = async (req, res) => {
   }
 };
 
-// ...existing code...
-module.exports = { getDetails, addDetails, updateDetails, deleteDetails, getCount, updateTimetable }
+module.exports = { getDetails, addDetails, updateDetails, deleteDetails, getCount, updateTimetable}

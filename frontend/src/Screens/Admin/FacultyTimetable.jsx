@@ -161,85 +161,67 @@ const FacultyTimetable = () => {
     });
   };
 
-  // ...existing code...
-
-const saveFacultyTimetable = () => {
-  if (!selectedFaculty) {
-    toast.error("Please select a faculty member");
-    return;
-  }
-
-  // Collect branch, semester, section from the first period (assuming all periods are for same section)
-  let branch = "", semester = "", section = "";
-  for (const day of daysOfWeek) {
-    if (timetable[day].length > 0) {
-      branch = timetable[day][0].branch;
-      semester = timetable[day][0].semester;
-      section = timetable[day][0].section;
-      break;
+  const saveFacultyTimetable = () => {
+    if (!selectedFaculty) {
+      toast.error("Please select a faculty member");
+      return;
     }
-  }
 
-  if (!branch || !semester || !section) {
-    toast.error("Please select branch, semester, and section for all periods");
-    return;
-  }
+    // Convert to backend format
+    const timetableToSave = Object.entries(timetable)
+      .filter(([_, periods]) => periods.length > 0)
+      .map(([day, periods]) => ({
+        day,
+        periods: periods.filter(period => 
+          period.subject && 
+          period.branch && 
+          period.semester && 
+          period.section && 
+          period.startTime && 
+          period.endTime
+        )
+      }));
 
-  // Convert to backend format
-  const days = Object.entries(timetable)
-    .filter(([_, periods]) => periods.length > 0)
-    .map(([day, periods]) => ({
-      day,
-      periods: periods.filter(period =>
-        period.subject &&
-        period.startTime &&
-        period.endTime
+    // Validate all required fields
+    const hasEmptyFields = timetableToSave.some(dayData => 
+      dayData.periods.some(period => 
+        !period.subject || 
+        !period.branch || 
+        !period.semester || 
+        !period.section || 
+        !period.startTime || 
+        !period.endTime
       )
-    }));
+    );
 
-  // Validate all required fields
-  const hasEmptyFields = days.some(dayData =>
-    dayData.periods.some(period =>
-      !period.subject ||
-      !period.branch ||
-      !period.semester ||
-      !period.section ||
-      !period.startTime ||
-      !period.endTime
-    )
-  );
+    if (hasEmptyFields) {
+      toast.error("Please fill all fields for all active periods");
+      return;
+    }
 
-  if (hasEmptyFields) {
-    toast.error("Please fill all fields for all active periods");
-    return;
-  }
-
-  toast.loading("Saving Faculty Timetable");
-  axios
-    .put(`${baseApiURL()}/faculty/details/updateTimetable/${selectedFaculty}`, {
-      branch,
-      semester,
-      section,
-      days
-    })
-    .then((res) => {
-      toast.dismiss();
-      if (res.data.success) {
-        toast.success("Faculty timetable updated successfully");
-        loadFacultyTimetable();
-        setSelectedTab("view");
-      } else {
-        toast.error(res.data.message);
-      }
-    })
-    .catch((err) => {
-      toast.dismiss();
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to save faculty timetable");
-    });
-};
-
-// ...existing code...
+    toast.loading("Saving Faculty Timetable");
+    axios
+      .put(`${baseApiURL()}/faculty/details/updateTimetable/${selectedFaculty}`, { 
+        timetable: timetableToSave 
+      })
+      .then((res) => {
+        toast.dismiss();
+        if (res.data.success) {
+          toast.success("Faculty timetable updated successfully");
+          // Reload the timetable to ensure consistency
+          loadFacultyTimetable();
+          // Switch back to view mode
+          setSelectedTab("view");
+        } else {
+          toast.error(res.data.message);
+        }
+      })
+      .catch((err) => {
+        toast.dismiss();
+        console.error(err);
+        toast.error(err.response?.data?.message || "Failed to save faculty timetable");
+      });
+  };
 
   if (loading) {
     return (
@@ -296,22 +278,19 @@ const saveFacultyTimetable = () => {
                 Select Faculty
               </label>
               <select
-  id="faculty"
-  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-  value={selectedFaculty}
-  onChange={(e) => setSelectedFaculty(e.target.value)}
-  disabled={loading}
->
-  <option value="">Select Faculty</option>
-  {faculties.map((faculty) => (
-    <option key={faculty._id} value={faculty.employeeId}>
-      {faculty.firstName}
-      {faculty.middleName && faculty.middleName.trim() !== "" ? ` ${faculty.middleName}` : ""}
-      {faculty.lastName ? ` ${faculty.lastName}` : ""}
-      {` (${faculty.employeeId})`}
-    </option>
-  ))}
-</select>
+                id="faculty"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={selectedFaculty}
+                onChange={(e) => setSelectedFaculty(e.target.value)}
+                disabled={loading}
+              >
+                <option value="">Select Faculty</option>
+                {faculties.map((faculty) => (
+                  <option key={faculty._id} value={faculty.employeeId}>
+                    {faculty.firstName} {faculty.middleName ? faculty.middleName + " " : ""}{faculty.lastName} ({faculty.employeeId})
+                  </option>
+                ))}
+              </select>
             </div>
 
 
