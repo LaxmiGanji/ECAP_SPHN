@@ -25,7 +25,7 @@ const Navbar = () => {
                 Sphoorthy Engineering College
               </span>
               <span className="text-xs text-blue-200 font-medium tracking-wider uppercase">
-                Educational College Automation Package
+                Engineering College Automation Package
               </span>
             </div>
           </div>
