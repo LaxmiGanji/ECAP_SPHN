@@ -287,11 +287,12 @@ const FacultyTimetable = () => {
                 <option value="">Select Faculty</option>
                 {faculties.map((faculty) => (
                   <option key={faculty._id} value={faculty.employeeId}>
-                    {faculty.firstName} {faculty.middleName} {faculty.lastName} ({faculty.employeeId})
+                    {faculty.firstName} {faculty.middleName ? faculty.middleName + " " : ""}{faculty.lastName} ({faculty.employeeId})
                   </option>
                 ))}
               </select>
             </div>
+
 
             {selectedTab === "view" && selectedFaculty && (
               <ViewFacultyTimetable facultyId={selectedFaculty} />
