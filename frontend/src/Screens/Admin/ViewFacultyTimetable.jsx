@@ -37,7 +37,7 @@ const ViewFacultyTimetable = ({ facultyId }) => {
       if (response.data.success && response.data.user[0]) {
         const faculty = response.data.user[0];
         setFacultyInfo({
-          name: `${faculty.firstName} ${faculty.lastName}`,
+          name: `${faculty.firstName} ${faculty.middleName} ${faculty.lastName}`,
           department: faculty.department,
           employeeId: faculty.employeeId
         });

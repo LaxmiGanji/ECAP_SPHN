@@ -287,7 +287,7 @@ const FacultyTimetable = () => {
                 <option value="">Select Faculty</option>
                 {faculties.map((faculty) => (
                   <option key={faculty._id} value={faculty.employeeId}>
-                    {faculty.firstName} {faculty.lastName} ({faculty.employeeId})
+                    {faculty.firstName} {faculty.middleName} {faculty.lastName} ({faculty.employeeId})
                   </option>
                 ))}
               </select>
