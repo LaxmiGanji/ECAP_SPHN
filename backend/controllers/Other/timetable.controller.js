@@ -25,7 +25,7 @@ const getTimetable = async (req, res) => {
 const addTimetable = async (req, res) => {
     const { semester, branch, section, schedule } = req.body;
     try {
-        let timetable = await Timetable.findOne({ semester, branch });
+        let timetable = await Timetable.findOne({ semester, branch, section });
         if (timetable) {
             await Timetable.findByIdAndUpdate(timetable._id, {
                 semester,
