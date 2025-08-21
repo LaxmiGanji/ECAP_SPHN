@@ -351,15 +351,15 @@ const StudentTimetable = () => {
                     <table className="min-w-full">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900 border-b">
+                          <th className="sticky left-0 z-10 border-b bg-gray-50 py-4 px-6 text-left text-sm font-semibold text-gray-900">
                             Day/Period
                           </th>
                           {Array.from({ length: Math.max(...daysOfWeek.map(day => schedule[day].length), 1) }).map((_, i) => (
-                            <th key={i} className="py-4 px-6 text-center text-sm font-semibold text-gray-900 border-b">
+                            <th key={i} className="min-w-[280px] border-b py-4 px-6 text-center text-sm font-semibold text-gray-900">
                               Period {i + 1}
                             </th>
                           ))}
-                          <th className="py-4 px-6 text-center text-sm font-semibold text-gray-900 border-b">
+                          <th className="sticky right-0 z-10 border-b bg-gray-50 py-4 px-6 text-center text-sm font-semibold text-gray-900">
                             Actions
                           </th>
                         </tr>
@@ -367,7 +367,7 @@ const StudentTimetable = () => {
                       <tbody className="divide-y divide-gray-200">
                         {daysOfWeek.map((day) => (
                           <tr key={day} className="hover:bg-gray-50">
-                            <td className="py-4 px-6 font-semibold text-gray-900 text-center">
+                            <td className="sticky left-0 z-10 bg-white py-4 px-6 text-center font-semibold text-gray-900 hover:bg-gray-50">
                               {day}
                             </td>
                             {Array.from({ length: Math.max(schedule[day].length, 1) }).map((_, index) => (
@@ -415,7 +415,7 @@ const StudentTimetable = () => {
                                     <option value="">Select Faculty</option>
                                     {faculties.map((f) => (
                                       <option key={f._id} value={f.firstName}>
-                                        {f.firstName} {f.lastName} ({f.employeeId})
+                                        {f.firstName} {f.middleName} {f.lastName} ({f.employeeId})
                                       </option>
                                     ))}
                                   </select>
@@ -450,7 +450,7 @@ const StudentTimetable = () => {
                                 </div>
                               </td>
                             ))}
-                            <td className="py-4 px-6 text-center">
+                            <td className="sticky right-0 z-10 bg-white py-4 px-6 text-center hover:bg-gray-50">
                               <button
                                 className="px-4 py-2 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600 transition-colors"
                                 onClick={() => addPeriod(day)}
