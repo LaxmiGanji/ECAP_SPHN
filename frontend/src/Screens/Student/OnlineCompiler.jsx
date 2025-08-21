@@ -8,11 +8,26 @@ const OnlineCompiler = () => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState("");
+  const [backendStatus, setBackendStatus] = useState("checking");
 
-  // Initialize with default template
+  // Initialize with default template and check backend status
   useEffect(() => {
     setCode(defaultTemplates.python);
+    checkBackendStatus();
   }, []);
+
+  const checkBackendStatus = async () => {
+    try {
+      const response = await fetch(`${baseApiURL()}/api/compiler/health`);
+      if (response.ok) {
+        setBackendStatus("available");
+      } else {
+        setBackendStatus("unavailable");
+      }
+    } catch (err) {
+      setBackendStatus("unavailable");
+    }
+  };
 
   
   // Default code templates for each language
@@ -70,6 +85,17 @@ int main() {
     setError("");
     setOutput("");
 
+    // Check if backend is accessible first
+    try {
+      const healthCheck = await fetch(`${baseApiURL()}/api/compiler/health`);
+      if (!healthCheck.ok) {
+        throw new Error("Backend not accessible");
+      }
+    } catch (err) {
+      setError("Backend compiler service is not available. This feature requires the backend server to be running with Python, Java, and C compilers installed.");
+      setIsRunning(false);
+      return;
+    }
     
     try {
       const response = await fetch(`${baseApiURL()}/api/compiler/execute`, {
@@ -97,7 +123,7 @@ int main() {
     } catch (err) {
       console.error("Compiler error:", err);
       if (err.message.includes("Failed to fetch")) {
-        setError("Backend server is not running. Please start the backend server first.");
+        setError("Backend server is not accessible. Please ensure the backend server is running and the compiler service is available.");
       } else {
         setError("Network error. Please check your connection and try again.");
       }
@@ -127,6 +153,28 @@ int main() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Online Code Compiler</h1>
           <p className="text-gray-600">Write, compile, and run your code in C, Java, and Python</p>
+          
+          {/* Backend Status Indicator */}
+          <div className="mt-4">
+            {backendStatus === "checking" && (
+              <div className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg">
+                <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse mr-2"></div>
+                Checking backend status...
+              </div>
+            )}
+            {backendStatus === "available" && (
+              <div className="inline-flex items-center px-3 py-2 bg-green-100 text-green-800 rounded-lg">
+                <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                Backend compiler service is available
+              </div>
+            )}
+            {backendStatus === "unavailable" && (
+              <div className="inline-flex items-center px-3 py-2 bg-red-100 text-red-800 rounded-lg">
+                <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                Backend compiler service is not available
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Language Selection */}
@@ -193,11 +241,11 @@ int main() {
               />
               
               <div className="mt-4">
-                <button
-                  onClick={handleRunCode}
-                  disabled={isRunning}
-                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
-                >
+                                 <button
+                   onClick={handleRunCode}
+                   disabled={isRunning || backendStatus !== "available"}
+                   className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
+                 >
                   {isRunning ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -242,11 +290,14 @@ int main() {
                   </div>
                 ) : output ? (
                   <pre className="whitespace-pre-wrap">{output}</pre>
-                ) : (
-                  <div className="text-gray-500 italic">
-                    Output will appear here after running your code...
-                  </div>
-                )}
+                                 ) : (
+                   <div className="text-gray-500 italic">
+                     <div>Output will appear here after running your code...</div>
+                     <div className="mt-2 text-xs">
+                       <strong>Note:</strong> This feature requires the backend server to be running with Python, Java, and C compilers installed.
+                     </div>
+                   </div>
+                 )}
               </div>
             </div>
           </div>
