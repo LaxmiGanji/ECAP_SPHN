@@ -161,6 +161,26 @@ const FacultyTimetable = () => {
     });
   };
 
+  const handleSubjectChange = (day, index, newSubject) => {
+    setTimetable(prev => {
+      const daySchedule = [...prev[day]];
+      const period = { ...daySchedule[index], subject: newSubject };
+
+      if (newSubject === "Break" || newSubject === "No Class") {
+        period.branch = "";
+        period.semester = "";
+        period.section = "";
+      }
+
+      daySchedule[index] = period;
+
+      return {
+        ...prev,
+        [day]: daySchedule
+      };
+    });
+  };
+
   const saveFacultyTimetable = () => {
     if (!selectedFaculty) {
       toast.error("Please select a faculty member");
@@ -172,26 +192,32 @@ const FacultyTimetable = () => {
       .filter(([_, periods]) => periods.length > 0)
       .map(([day, periods]) => ({
         day,
-        periods: periods.filter(period => 
-          period.subject && 
-          period.branch && 
-          period.semester && 
-          period.section && 
-          period.startTime && 
-          period.endTime
-        )
+        periods: periods.filter(period => {
+          if (period.subject === "Break" || period.subject === "No Class") {
+            return period.startTime && period.endTime;
+          }
+          return period.subject &&
+            period.branch &&
+            period.semester &&
+            period.section &&
+            period.startTime &&
+            period.endTime;
+        })
       }));
 
     // Validate all required fields
-    const hasEmptyFields = timetableToSave.some(dayData => 
-      dayData.periods.some(period => 
-        !period.subject || 
-        !period.branch || 
-        !period.semester || 
-        !period.section || 
-        !period.startTime || 
-        !period.endTime
-      )
+    const hasEmptyFields = timetableToSave.some(dayData =>
+      dayData.periods.some(period => {
+        if (period.subject === "Break" || period.subject === "No Class") {
+          return !period.startTime || !period.endTime;
+        }
+        return !period.subject ||
+          !period.branch ||
+          !period.semester ||
+          !period.section ||
+          !period.startTime ||
+          !period.endTime;
+      })
     );
 
     if (hasEmptyFields) {
@@ -201,8 +227,8 @@ const FacultyTimetable = () => {
 
     toast.loading("Saving Faculty Timetable");
     axios
-      .put(`${baseApiURL()}/faculty/details/updateTimetable/${selectedFaculty}`, { 
-        timetable: timetableToSave 
+      .put(`${baseApiURL()}/faculty/details/updateTimetable/${selectedFaculty}`, {
+        timetable: timetableToSave
       })
       .then((res) => {
         toast.dismiss();
@@ -331,9 +357,11 @@ const FacultyTimetable = () => {
                                   <select
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     value={timetable[day][index]?.subject || ""}
-                                    onChange={(e) => updatePeriod(day, index, "subject", e.target.value)}
+                                    onChange={(e) => handleSubjectChange(day, index, e.target.value)}
                                   >
                                     <option value="">Select Subject</option>
+                                    <option value="Break">Break</option>
+                                    <option value="No Class">No Class</option>
                                     {subjects.map((subj) => (
                                       <option key={subj._id} value={subj.name}>
                                         {subj.name} ({subj.code})
@@ -341,47 +369,53 @@ const FacultyTimetable = () => {
                                     ))}
                                   </select>
 
-                                  {/* Branch Dropdown */}
-                                  <select
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    value={timetable[day][index]?.branch || ""}
-                                    onChange={(e) => updatePeriod(day, index, "branch", e.target.value)}
-                                  >
-                                    <option value="">Select Branch</option>
-                                    {branches.map((branch) => (
-                                      <option key={branch._id} value={branch.name}>
-                                        {branch.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  {timetable[day][index]?.subject &&
+                                    timetable[day][index]?.subject !== "Break" &&
+                                    timetable[day][index]?.subject !== "No Class" && (
+                                      <>
+                                        {/* Branch Dropdown */}
+                                        <select
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                          value={timetable[day][index]?.branch || ""}
+                                          onChange={(e) => updatePeriod(day, index, "branch", e.target.value)}
+                                        >
+                                          <option value="">Select Branch</option>
+                                          {branches.map((branch) => (
+                                            <option key={branch._id} value={branch.name}>
+                                              {branch.name}
+                                            </option>
+                                          ))}
+                                        </select>
 
-                                  {/* Semester Dropdown */}
-                                  <select
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    value={timetable[day][index]?.semester || ""}
-                                    onChange={(e) => updatePeriod(day, index, "semester", e.target.value)}
-                                  >
-                                    <option value="">Select Semester</option>
-                                    {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                                      <option key={sem} value={sem}>
-                                        Semester {sem}
-                                      </option>
-                                    ))}
-                                  </select>
+                                        {/* Semester Dropdown */}
+                                        <select
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                          value={timetable[day][index]?.semester || ""}
+                                          onChange={(e) => updatePeriod(day, index, "semester", e.target.value)}
+                                        >
+                                          <option value="">Select Semester</option>
+                                          {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                                            <option key={sem} value={sem}>
+                                              Semester {sem}
+                                            </option>
+                                          ))}
+                                        </select>
 
-                                  {/* Section Dropdown */}
-                                  <select
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    value={timetable[day][index]?.section || ""}
-                                    onChange={(e) => updatePeriod(day, index, "section", e.target.value)}
-                                  >
-                                    <option value="">Select Section</option>
-                                    {["A", "B", "C", "D"].map((sec) => (
-                                      <option key={sec} value={sec}>
-                                        Section {sec}
-                                      </option>
-                                    ))}
-                                  </select>
+                                        {/* Section Dropdown */}
+                                        <select
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                          value={timetable[day][index]?.section || ""}
+                                          onChange={(e) => updatePeriod(day, index, "section", e.target.value)}
+                                        >
+                                          <option value="">Select Section</option>
+                                          {["A", "B", "C", "D"].map((sec) => (
+                                            <option key={sec} value={sec}>
+                                              Section {sec}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </>
+                                    )}
 
                                   {/* Time Inputs */}
                                   <div className="grid grid-cols-2 gap-2">
