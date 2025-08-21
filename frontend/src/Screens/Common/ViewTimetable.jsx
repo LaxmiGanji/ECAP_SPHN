@@ -11,6 +11,10 @@ const ViewTimetable = () => {
   const [editedTimetable, setEditedTimetable] = useState(null);
   const [subjects, setSubjects] = useState([]);
   const [faculties, setFaculties] = useState([]);
+  const [filteredSubjects, setFilteredSubjects] = useState([]);
+  const [availableDays, setAvailableDays] = useState([]);
+
+  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   useEffect(() => {
     axios
@@ -46,6 +50,28 @@ const ViewTimetable = () => {
       });
   }, []);
 
+  // Filter subjects when branch or semester changes
+  useEffect(() => {
+    if (selected.branch && selected.semester) {
+      const filtered = subjects.filter(
+        (subject) => 
+          subject.semester === parseInt(selected.semester) && 
+          subject.branch?.name === selected.branch
+      );
+      setFilteredSubjects(filtered);
+    } else {
+      setFilteredSubjects([]);
+    }
+  }, [selected.branch, selected.semester, subjects]);
+
+  // Update available days when timetable changes
+  useEffect(() => {
+    if (timetable && timetable.schedule) {
+      const currentDays = timetable.schedule.map(day => day.day);
+      setAvailableDays(currentDays);
+    }
+  }, [timetable]);
+
   const fetchTimetable = () => {
     if (!selected.branch || !selected.semester || !selected.section) {
       toast.error("Please select all fields");
@@ -65,9 +91,14 @@ const ViewTimetable = () => {
           const fetchedTimetable = res.data.timetable[0];
           setTimetable(fetchedTimetable);
           setEditedTimetable(JSON.parse(JSON.stringify(fetchedTimetable)));
+          
+          // Set available days
+          const currentDays = fetchedTimetable.schedule.map(day => day.day);
+          setAvailableDays(currentDays);
         } else {
           setTimetable(null);
           setEditedTimetable(null);
+          setAvailableDays([]);
           toast.error("No timetable found");
         }
       })
@@ -84,6 +115,12 @@ const ViewTimetable = () => {
   const handleCancel = () => {
     setEditMode(false);
     setEditedTimetable(JSON.parse(JSON.stringify(timetable)));
+    
+    // Reset available days to original
+    if (timetable) {
+      const currentDays = timetable.schedule.map(day => day.day);
+      setAvailableDays(currentDays);
+    }
   };
 
   const handleSave = () => {
@@ -102,6 +139,10 @@ const ViewTimetable = () => {
           setTimetable(res.data.timetable);
           setEditedTimetable(JSON.parse(JSON.stringify(res.data.timetable)));
           setEditMode(false);
+          
+          // Update available days
+          const currentDays = res.data.timetable.schedule.map(day => day.day);
+          setAvailableDays(currentDays);
         } else {
           toast.error(res.data.message);
         }
@@ -119,6 +160,73 @@ const ViewTimetable = () => {
       ...editedTimetable,
       schedule: updatedSchedule
     });
+  };
+
+  const addPeriod = (dayIndex) => {
+    const updatedSchedule = [...editedTimetable.schedule];
+    updatedSchedule[dayIndex].periods.push({
+      periodNumber: updatedSchedule[dayIndex].periods.length + 1,
+      subject: "",
+      faculty: "",
+      startTime: "",
+      endTime: ""
+    });
+    setEditedTimetable({
+      ...editedTimetable,
+      schedule: updatedSchedule
+    });
+  };
+
+  const removePeriod = (dayIndex, periodIndex) => {
+    const updatedSchedule = [...editedTimetable.schedule];
+    updatedSchedule[dayIndex].periods.splice(periodIndex, 1);
+    
+    // Update period numbers
+    updatedSchedule[dayIndex].periods = updatedSchedule[dayIndex].periods.map((period, idx) => ({
+      ...period,
+      periodNumber: idx + 1
+    }));
+    
+    setEditedTimetable({
+      ...editedTimetable,
+      schedule: updatedSchedule
+    });
+  };
+
+  const addDay = (day) => {
+    const updatedSchedule = [...editedTimetable.schedule];
+    updatedSchedule.push({
+      day: day,
+      periods: [{
+        periodNumber: 1,
+        subject: "",
+        faculty: "",
+        startTime: "",
+        endTime: ""
+      }]
+    });
+    
+    setEditedTimetable({
+      ...editedTimetable,
+      schedule: updatedSchedule
+    });
+    
+    // Update available days
+    setAvailableDays([...availableDays, day]);
+  };
+
+  const removeDay = (dayIndex) => {
+    const updatedSchedule = [...editedTimetable.schedule];
+    const removedDay = updatedSchedule[dayIndex].day;
+    updatedSchedule.splice(dayIndex, 1);
+    
+    setEditedTimetable({
+      ...editedTimetable,
+      schedule: updatedSchedule
+    });
+    
+    // Update available days
+    setAvailableDays(availableDays.filter(day => day !== removedDay));
   };
 
   const maxPeriods = () => {
@@ -186,6 +294,25 @@ const ViewTimetable = () => {
         </div>
       </div>
 
+      {editMode && (
+        <div className="w-3/4 bg-blue-50 p-4 rounded-md">
+          <h3 className="font-semibold mb-2">Add Days:</h3>
+          <div className="flex flex-wrap gap-2">
+            {daysOfWeek.map(day => (
+              !availableDays.includes(day) && (
+                <button
+                  key={day}
+                  onClick={() => addDay(day)}
+                  className="px-3 py-1 bg-green-500 text-white rounded-md text-sm"
+                >
+                  Add {day}
+                </button>
+              )
+            ))}
+          </div>
+        </div>
+      )}
+
       {timetable && (
         <div className="overflow-x-auto w-full mt-6">
           <h2 className="text-xl font-semibold mb-4 text-center">Timetable</h2>
@@ -196,12 +323,23 @@ const ViewTimetable = () => {
                 {Array.from({ length: maxPeriods() }).map((_, i) => (
                   <th key={i} className="px-4 py-2 border">Period {i + 1}</th>
                 ))}
+                {editMode && <th className="px-4 py-2 border">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {(editMode ? editedTimetable.schedule : timetable.schedule).map((dayEntry, dayIndex) => (
                 <tr key={dayEntry.day}>
-                  <td className="px-4 py-2 border font-semibold text-center">{dayEntry.day}</td>
+                  <td className="px-4 py-2 border font-semibold text-center">
+                    {dayEntry.day}
+                    {editMode && (
+                      <button
+                        className="ml-2 px-2 py-1 bg-red-500 text-white rounded-md text-xs"
+                        onClick={() => removeDay(dayIndex)}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </td>
                   {Array.from({ length: maxPeriods() }).map((_, periodIndex) => {
                     const period = dayEntry.periods[periodIndex];
                     return (
@@ -216,7 +354,10 @@ const ViewTimetable = () => {
                                 onChange={(e) => updatePeriod(dayIndex, periodIndex, 'subject', e.target.value)}
                               >
                                 <option value="">Select Subject</option>
-                                {subjects.map((subj) => (
+                                <option value="Break">Break</option>
+                                <option value="Sports">Sports</option>
+                                <option value="Library">Library</option>
+                                {filteredSubjects.map((subj) => (
                                   <option key={subj._id} value={subj.name}>
                                     {subj.name} ({subj.code})
                                   </option>
@@ -228,11 +369,12 @@ const ViewTimetable = () => {
                                 className="px-2 py-1 border rounded-md text-sm"
                                 value={period.faculty}
                                 onChange={(e) => updatePeriod(dayIndex, periodIndex, 'faculty', e.target.value)}
+                                disabled={["Break", "Sports", "Library"].includes(period.subject)}
                               >
                                 <option value="">Select Faculty</option>
                                 {faculties.map((f) => (
                                   <option key={f._id} value={`${f.firstName} ${f.lastName}`}>
-                                    {f.firstName} {f.lastName} ({f.employeeId})
+                                    {f.firstName} {f.middleName} {f.lastName} ({f.employeeId})
                                   </option>
                                 ))}
                               </select>
@@ -249,6 +391,13 @@ const ViewTimetable = () => {
                                 value={period.endTime}
                                 onChange={(e) => updatePeriod(dayIndex, periodIndex, 'endTime', e.target.value)}
                               />
+                              
+                              <button
+                                className="px-2 py-1 bg-red-500 text-white rounded-md text-sm"
+                                onClick={() => removePeriod(dayIndex, periodIndex)}
+                              >
+                                Remove
+                              </button>
                             </div>
                           ) : (
                             <>
@@ -263,6 +412,16 @@ const ViewTimetable = () => {
                       </td>
                     );
                   })}
+                  {editMode && (
+                    <td className="px-4 py-2 border text-center">
+                      <button
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md text-sm"
+                        onClick={() => addPeriod(dayIndex)}
+                      >
+                        Add Period
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

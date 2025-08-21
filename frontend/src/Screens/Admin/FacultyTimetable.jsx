@@ -161,26 +161,6 @@ const FacultyTimetable = () => {
     });
   };
 
-  const handleSubjectChange = (day, index, newSubject) => {
-    setTimetable(prev => {
-      const daySchedule = [...prev[day]];
-      const period = { ...daySchedule[index], subject: newSubject };
-
-      if (newSubject === "Break" || newSubject === "No Class") {
-        period.branch = "";
-        period.semester = "";
-        period.section = "";
-      }
-
-      daySchedule[index] = period;
-
-      return {
-        ...prev,
-        [day]: daySchedule
-      };
-    });
-  };
-
   const saveFacultyTimetable = () => {
     if (!selectedFaculty) {
       toast.error("Please select a faculty member");
@@ -192,43 +172,41 @@ const FacultyTimetable = () => {
       .filter(([_, periods]) => periods.length > 0)
       .map(([day, periods]) => ({
         day,
-        periods: periods.filter(period => {
-          if (period.subject === "Break" || period.subject === "No Class") {
-            return period.startTime && period.endTime;
-          }
-          return period.subject &&
-            period.branch &&
-            period.semester &&
-            period.section &&
-            period.startTime &&
-            period.endTime;
-        })
+        periods: periods.filter(period => 
+          period.subject && 
+          period.startTime && 
+          period.endTime
+        )
       }));
 
     // Validate all required fields
-    const hasEmptyFields = timetableToSave.some(dayData =>
+    const hasEmptyFields = timetableToSave.some(dayData => 
       dayData.periods.some(period => {
-        if (period.subject === "Break" || period.subject === "No Class") {
-          return !period.startTime || !period.endTime;
+        // For special periods, only subject, startTime and endTime are required
+        const isSpecialPeriod = ["Break", "Sports", "Library", "Other"].includes(period.subject);
+        
+        if (isSpecialPeriod) {
+          return !period.subject || !period.startTime || !period.endTime;
+        } else {
+          return !period.subject || 
+                 !period.branch || 
+                 !period.semester || 
+                 !period.section || 
+                 !period.startTime || 
+                 !period.endTime;
         }
-        return !period.subject ||
-          !period.branch ||
-          !period.semester ||
-          !period.section ||
-          !period.startTime ||
-          !period.endTime;
       })
     );
 
     if (hasEmptyFields) {
-      toast.error("Please fill all fields for all active periods");
+      toast.error("Please fill all required fields for all active periods");
       return;
     }
 
     toast.loading("Saving Faculty Timetable");
     axios
-      .put(`${baseApiURL()}/faculty/details/updateTimetable/${selectedFaculty}`, {
-        timetable: timetableToSave
+      .put(`${baseApiURL()}/faculty/details/updateTimetable/${selectedFaculty}`, { 
+        timetable: timetableToSave 
       })
       .then((res) => {
         toast.dismiss();
@@ -313,12 +291,11 @@ const FacultyTimetable = () => {
                 <option value="">Select Faculty</option>
                 {faculties.map((faculty) => (
                   <option key={faculty._id} value={faculty.employeeId}>
-                    {faculty.firstName} {faculty.middleName ? faculty.middleName + " " : ""}{faculty.lastName} ({faculty.employeeId})
+                    {faculty.firstName} {faculty.middleName} {faculty.lastName} ({faculty.employeeId})
                   </option>
                 ))}
               </select>
             </div>
-
 
             {selectedTab === "view" && selectedFaculty && (
               <ViewFacultyTimetable facultyId={selectedFaculty} />
@@ -326,144 +303,163 @@ const FacultyTimetable = () => {
 
             {selectedTab === "edit" && selectedFaculty && (
               <div className="space-y-8">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900 border-b">
-                            Day/Period
-                          </th>
-                          {Array.from({ length: Math.max(...daysOfWeek.map(day => timetable[day].length), 1) }).map((_, i) => (
-                            <th key={i} className="py-4 px-6 text-center text-sm font-semibold text-gray-900 border-b">
-                              Period {i + 1}
-                            </th>
-                          ))}
-                          <th className="py-4 px-6 text-center text-sm font-semibold text-gray-900 border-b">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {daysOfWeek.map((day) => (
-                          <tr key={day} className="hover:bg-gray-50">
-                            <td className="py-4 px-6 font-semibold text-gray-900 text-center">
-                              {day}
-                            </td>
-                            {Array.from({ length: Math.max(timetable[day].length, 1) }).map((_, index) => (
-                              <td key={index} className="py-4 px-6">
-                                <div className="space-y-2">
-                                  {/* Subject Dropdown */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {daysOfWeek.map((day) => (
+                    <div key={day} className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold text-gray-800">{day}</h3>
+                        <button
+                          onClick={() => addPeriod(day)}
+                          className="px-3 py-1 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600 transition-colors"
+                        >
+                          Add Period
+                        </button>
+                      </div>
+                      
+                      {timetable[day].length === 0 ? (
+                        <div className="text-center py-6 text-gray-500">
+                          No periods scheduled for {day}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {timetable[day].map((period, index) => (
+                            <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                              <div className="flex justify-between items-center mb-3">
+                                <span className="font-medium text-gray-700">Period {period.periodNumber}</span>
+                                <button
+                                  onClick={() => removePeriod(day, index)}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              </div>
+                              
+                              <div className="space-y-3">
+                                {/* Subject Dropdown - including special periods */}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
                                   <select
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    value={timetable[day][index]?.subject || ""}
-                                    onChange={(e) => handleSubjectChange(day, index, e.target.value)}
+                                    value={period.subject || ""}
+                                    onChange={(e) => updatePeriod(day, index, "subject", e.target.value)}
                                   >
                                     <option value="">Select Subject</option>
+                                    {/* Special periods */}
                                     <option value="Break">Break</option>
-                                    <option value="No Class">No Class</option>
+                                    <option value="Sports">Sports</option>
+                                    <option value="Library">Library</option>
+                                    <option value="Other">Other</option>
+                                    {/* Academic subjects */}
                                     {subjects.map((subj) => (
                                       <option key={subj._id} value={subj.name}>
                                         {subj.name} ({subj.code})
                                       </option>
                                     ))}
                                   </select>
+                                </div>
 
-                                  {timetable[day][index]?.subject &&
-                                    timetable[day][index]?.subject !== "Break" &&
-                                    timetable[day][index]?.subject !== "No Class" && (
-                                      <>
-                                        {/* Branch Dropdown */}
-                                        <select
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                          value={timetable[day][index]?.branch || ""}
-                                          onChange={(e) => updatePeriod(day, index, "branch", e.target.value)}
-                                        >
-                                          <option value="">Select Branch</option>
-                                          {branches.map((branch) => (
-                                            <option key={branch._id} value={branch.name}>
-                                              {branch.name}
-                                            </option>
-                                          ))}
-                                        </select>
+                                {/* Branch Dropdown - disabled for special periods */}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+                                  <select
+                                    className={`w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                      ["Break", "Sports", "Library", "Other"].includes(period.subject)
+                                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                                        : "border-gray-300"
+                                    }`}
+                                    value={period.branch || ""}
+                                    onChange={(e) => updatePeriod(day, index, "branch", e.target.value)}
+                                    disabled={["Break", "Sports", "Library", "Other"].includes(period.subject)}
+                                  >
+                                    <option value="">Select Branch</option>
+                                    {branches.map((branch) => (
+                                      <option key={branch._id} value={branch.name}>
+                                        {branch.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
 
-                                        {/* Semester Dropdown */}
-                                        <select
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                          value={timetable[day][index]?.semester || ""}
-                                          onChange={(e) => updatePeriod(day, index, "semester", e.target.value)}
-                                        >
-                                          <option value="">Select Semester</option>
-                                          {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                                            <option key={sem} value={sem}>
-                                              Semester {sem}
-                                            </option>
-                                          ))}
-                                        </select>
-
-                                        {/* Section Dropdown */}
-                                        <select
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                          value={timetable[day][index]?.section || ""}
-                                          onChange={(e) => updatePeriod(day, index, "section", e.target.value)}
-                                        >
-                                          <option value="">Select Section</option>
-                                          {["A", "B", "C", "D"].map((sec) => (
-                                            <option key={sec} value={sec}>
-                                              Section {sec}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </>
-                                    )}
-
-                                  {/* Time Inputs */}
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <input
-                                      type="time"
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      value={timetable[day][index]?.startTime || ""}
-                                      onChange={(e) => updatePeriod(day, index, "startTime", e.target.value)}
-                                      placeholder="Start Time"
-                                    />
-                                    <input
-                                      type="time"
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      value={timetable[day][index]?.endTime || ""}
-                                      onChange={(e) => updatePeriod(day, index, "endTime", e.target.value)}
-                                      placeholder="End Time"
-                                    />
+                                <div className="grid grid-cols-2 gap-3">
+                                  {/* Semester Dropdown - disabled for special periods */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                                    <select
+                                      className={`w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                        ["Break", "Sports", "Library", "Other"].includes(period.subject)
+                                          ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                                          : "border-gray-300"
+                                      }`}
+                                      value={period.semester || ""}
+                                      onChange={(e) => updatePeriod(day, index, "semester", e.target.value)}
+                                      disabled={["Break", "Sports", "Library", "Other"].includes(period.subject)}
+                                    >
+                                      <option value="">Semester</option>
+                                      {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                                        <option key={sem} value={sem}>
+                                          {sem}
+                                        </option>
+                                      ))}
+                                    </select>
                                   </div>
 
-                                  {/* Remove Button */}
-                                  {timetable[day][index] && (
-                                    <button
-                                      className="w-full px-3 py-2 bg-red-500 text-white rounded-md text-sm hover:bg-red-600 transition-colors"
-                                      onClick={() => removePeriod(day, index)}
+                                  {/* Section Dropdown - disabled for special periods */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+                                    <select
+                                      className={`w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                        ["Break", "Sports", "Library", "Other"].includes(period.subject)
+                                          ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                                          : "border-gray-300"
+                                      }`}
+                                      value={period.section || ""}
+                                      onChange={(e) => updatePeriod(day, index, "section", e.target.value)}
+                                      disabled={["Break", "Sports", "Library", "Other"].includes(period.subject)}
                                     >
-                                      Remove
-                                    </button>
-                                  )}
+                                      <option value="">Section</option>
+                                      {["A", "B", "C", "D"].map((sec) => (
+                                        <option key={sec} value={sec}>
+                                          {sec}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
                                 </div>
-                              </td>
-                            ))}
-                            <td className="py-4 px-6 text-center">
-                              <button
-                                className="px-4 py-2 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600 transition-colors"
-                                onClick={() => addPeriod(day)}
-                              >
-                                Add Period
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                  {/* Time Inputs */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                                    <input
+                                      type="time"
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                      value={period.startTime || ""}
+                                      onChange={(e) => updatePeriod(day, index, "startTime", e.target.value)}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                                    <input
+                                      type="time"
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                      value={period.endTime || ""}
+                                      onChange={(e) => updatePeriod(day, index, "endTime", e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
 
                 {/* Save Button */}
-                <div className="flex justify-center">
+                <div className="flex justify-center pt-6">
                   <button
                     className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                     onClick={saveFacultyTimetable}
