@@ -9,7 +9,8 @@ import {
   FiCalendar,
   FiGrid,
   FiChevronLeft,
-  FiChevronRight
+  FiChevronRight,
+  FiCode
 } from "react-icons/fi";
 import { MdOutlineSchool, MdOutlineSubject } from "react-icons/md";
 
@@ -53,6 +54,7 @@ const Sidebar = ({ selectedMenu, setSelectedMenu, userType }) => {
           { id: "ViewAttendance", label: "View Attendance", icon: FiGrid, color: "from-teal-500 to-teal-600" },
           { id: "Certifications", label: "Certifications", icon: FiFileText, color: "from-red-500 to-red-600" },
           { id: "Fees", label: "Fees", icon: FiFileText, color: "from-yellow-500 to-yellow-600" },
+          { id: "OnlineCompiler", label: "Online Compiler", icon: FiCode, color: "from-indigo-500 to-indigo-600" },
           { id: "Edit Student", label: "Edit Student", icon: FiGrid, color: "from-red-500 to-red-600" }
         ];
       default:
@@ -60,6 +62,7 @@ const Sidebar = ({ selectedMenu, setSelectedMenu, userType }) => {
     }
   };
 
+  
   const menuItems = getMenuItems();
 
   return (

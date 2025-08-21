@@ -12,6 +12,7 @@ import ViewAttendance from "./ViewAttendance";
 import Certifications from "./Certifications";
 import Fees from "./Fees";
 import EditStudent from "./EditStudent";
+import OnlineCompiler from "./OnlineCompiler";
 
 const Home = () => {
   const [selectedMenu, setSelectedMenu] = useState("My Profile");
@@ -45,7 +46,9 @@ const Home = () => {
       case "Fees":
         return <Fees />;
       case "Edit Student":
-        return <EditStudent/>
+        return <EditStudent/>;
+      case "OnlineCompiler":
+        return <OnlineCompiler />;
       default:
         return <Profile />;
     }
@@ -155,3 +158,4 @@ const Home = () => {
 };
 
 export default Home;
+
