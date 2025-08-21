@@ -118,7 +118,7 @@ const Timetable = () => {
                         {period ? (
                           <>
                             <div><strong>{period.subject}</strong></div>
-                            <div>{period.faculty}</div>
+                            <div>{period.faculty.firstName} {period.faculty.middleName} {period.faculty.lastName}</div>
                             <div>{period.startTime} - {period.endTime}</div>
                           </>
                         ) : (
