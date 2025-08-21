@@ -21,17 +21,25 @@ const getTimetable = async (req, res) => {
     }
 };
 
-
 const addTimetable = async (req, res) => {
     const { semester, branch, section, schedule } = req.body;
     try {
+        // Parse the schedule data
+        let parsedSchedule;
+        try {
+            parsedSchedule = typeof schedule === 'string' ? JSON.parse(schedule) : schedule;
+        } catch (parseError) {
+            console.error("Error parsing schedule:", parseError);
+            return res.status(400).json({ success: false, message: "Invalid schedule format" });
+        }
+
         let timetable = await Timetable.findOne({ semester, branch, section });
         if (timetable) {
             await Timetable.findByIdAndUpdate(timetable._id, {
                 semester,
                 branch,
                 section,
-                schedule: JSON.parse(schedule)
+                schedule: parsedSchedule
             });
             const data = {
                 success: true,
@@ -43,7 +51,7 @@ const addTimetable = async (req, res) => {
                 semester,
                 branch,
                 section,
-                schedule: JSON.parse(schedule)
+                schedule: parsedSchedule
             });
             const data = {
                 success: true,
@@ -86,13 +94,22 @@ const editTimetable = async (req, res) => {
             return res.status(400).json({ success: false, message: "Missing required fields" });
         }
 
+        // Parse the schedule data
+        let parsedSchedule;
+        try {
+            parsedSchedule = typeof schedule === 'string' ? JSON.parse(schedule) : schedule;
+        } catch (parseError) {
+            console.error("Error parsing schedule:", parseError);
+            return res.status(400).json({ success: false, message: "Invalid schedule format" });
+        }
+
         const updatedTimetable = await Timetable.findByIdAndUpdate(
             id,
             {
                 semester,
                 branch,
                 section,
-                schedule: JSON.parse(schedule)
+                schedule: parsedSchedule
             },
             { new: true }
         );

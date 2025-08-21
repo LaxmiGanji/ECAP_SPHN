@@ -164,9 +164,11 @@ const StudentTimetable = () => {
       if (activePeriods.length > 0) {
         activePeriods.forEach(period => {
           // For Break, Sports, Library, faculty can be empty
+          const isSpecialPeriod = ["Break", "Sports", "Library"].includes(period.subject);
+          
           if (
             !period.subject ||
-            (!["Break", "Sports", "Library"].includes(period.subject) && !period.faculty) ||
+            (!isSpecialPeriod && !period.faculty) ||
             !period.startTime ||
             !period.endTime
           ) {
@@ -187,15 +189,23 @@ const StudentTimetable = () => {
       return;
     }
 
+    // Prepare schedule data for backend
+    const formattedSchedule = Object.entries(periodsToSave).map(([day, periods]) => ({
+      day,
+      periods: periods.map(period => ({
+        ...period,
+        // Set faculty to empty string for special periods
+        faculty: ["Break", "Sports", "Library"].includes(period.subject) ? "" : period.faculty
+      }))
+    }));
+
     toast.loading("Adding Timetable");
     axios
       .post(`${baseApiURL()}/timetable/addTimetable`, {
         branch: selected.branch,
         semester: selected.semester,
         section: selected.section,
-        schedule: JSON.stringify(
-          Object.entries(periodsToSave).map(([day, periods]) => ({ day, periods }))
-        )
+        schedule: JSON.stringify(formattedSchedule)
       })
       .then((res) => {
         toast.dismiss();
@@ -415,7 +425,7 @@ const StudentTimetable = () => {
                                     <option value="">Select Faculty</option>
                                     {faculties.map((f) => (
                                       <option key={f._id} value={f.firstName}>
-                                        {f.firstName} {f.middleName} {f.lastName} ({f.employeeId})
+                                        {f.firstName} {f.lastName} ({f.employeeId})
                                       </option>
                                     ))}
                                   </select>
