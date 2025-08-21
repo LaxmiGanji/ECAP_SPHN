@@ -4,7 +4,7 @@ const express = require("express");
 const app = express();
 const path = require("path")
 connectToMongo();
-const port = 5000 || process.env.PORT;
+const port = process.env.PORT || 10000;
 
 const cors = require("cors");
 

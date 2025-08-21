@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "postinstall": "apt-get update && apt-get install -y python3 openjdk-11-jdk build-essential"
   },
+  
   "author": "Ganji Laxmi",
   "license": "ISC",
   "dependencies": {
