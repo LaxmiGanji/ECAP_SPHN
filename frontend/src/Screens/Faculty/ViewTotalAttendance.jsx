@@ -398,12 +398,23 @@ const ViewTotalAttendance = () => {
             )
             // Sort enrollment numbers in ascending order
             .sort((a, b) => {
-              const numA = parseInt(a.student, 10);
-              const numB = parseInt(b.student, 10);
-              if (!isNaN(numA) && !isNaN(numB)) {
-                return numA - numB;
+              // Primary: sort by enrollment number (alphanumeric) ascending
+              const cmp = a.student.localeCompare(b.student, undefined, {
+                numeric: true,
+                sensitivity: "base",
+              });
+              if (cmp !== 0) return cmp;
+
+              // Secondary: ensure subject rows come before TOTAL row for the same student
+              if (a.isTotalRow !== b.isTotalRow) {
+                return a.isTotalRow ? 1 : -1;
               }
-              return a.student.localeCompare(b.student);
+
+              // Tertiary: sort by subject name for stable ordering
+              return String(a.subject).localeCompare(String(b.subject), undefined, {
+                numeric: true,
+                sensitivity: "base",
+              });
             })
             .map((item, index) => (
               <tr
