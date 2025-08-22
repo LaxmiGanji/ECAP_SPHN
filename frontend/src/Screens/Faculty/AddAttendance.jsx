@@ -22,9 +22,10 @@ const AddAttendance = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
   const [canAddAttendance, setCanAddAttendance] = useState(false);
+  const [absenteesInput, setAbsenteesInput] = useState("");
 
   // Sections available for filtering
-  const sections = ['A', 'B', 'C', 'D'];
+  const sections = ['A', 'B', 'C', 'D', 'SOC','WIPRO TRAINING', 'ATT'];
 
   // Fetch branch data
   const getBranchData = () => {
@@ -313,6 +314,14 @@ const AddAttendance = () => {
       toast.error("Please select both a subject and period.");
       return;
     }
+    
+    // Check if student is marked as absent
+    const absentees = absenteesInput.split(',').map(enrollment => enrollment.trim()).filter(enrollment => enrollment);
+    if (absentees.includes(student.enrollmentNo)) {
+      toast.error("Cannot mark attendance for absent student. Remove from absentees list first.");
+      return;
+    }
+    
     setMarkedAttendance((prev) => {
       const newState = { ...prev };
       if (newState[student.enrollmentNo]) {
@@ -347,22 +356,56 @@ const AddAttendance = () => {
     setSelectAllChecked(newSelectAllChecked);
     if (newSelectAllChecked) {
       const attendanceDataForBulk = {};
+      // Get absentees from input
+      const absentees = absenteesInput.split(',').map(enrollment => enrollment.trim()).filter(enrollment => enrollment);
+      
       filteredStudents.forEach((student) => {
-        attendanceDataForBulk[student.enrollmentNo] = {
-          enrollmentNo: student.enrollmentNo,
-          name: `${student.firstName} ${student.lastName}`,
-          branch: student.branch,
-          section: student.section,
-          subject: selectedSubject,
-          period: selectedPeriod,
-          semester: semester,
-          date: selectedDate,
-        };
+        // Skip absentees when marking all
+        if (!absentees.includes(student.enrollmentNo)) {
+          attendanceDataForBulk[student.enrollmentNo] = {
+            enrollmentNo: student.enrollmentNo,
+            name: `${student.firstName} ${student.lastName}`,
+            branch: student.branch,
+            section: student.section,
+            subject: selectedSubject,
+            period: selectedPeriod,
+            semester: semester,
+            date: selectedDate,
+          };
+        }
       });
       setMarkedAttendance(attendanceDataForBulk);
     } else {
       setMarkedAttendance({});
     }
+  };
+
+  // Handle absentees input
+  const handleAbsenteesInput = (input) => {
+    setAbsenteesInput(input);
+    
+    if (!input.trim()) {
+      return; // If input is empty, don't change anything
+    }
+    
+    // Split by comma and clean up whitespace
+    const absentees = input.split(',').map(enrollment => enrollment.trim()).filter(enrollment => enrollment);
+    
+    // Create new attendance state excluding absentees
+    const newAttendance = {};
+    Object.keys(markedAttendance).forEach(enrollmentNo => {
+      if (!absentees.includes(enrollmentNo)) {
+        newAttendance[enrollmentNo] = markedAttendance[enrollmentNo];
+      }
+    });
+    
+    setMarkedAttendance(newAttendance);
+    
+    // Update select all checkbox state
+    const remainingStudents = filteredStudents.filter(student => !absentees.includes(student.enrollmentNo));
+    const allRemainingSelected = remainingStudents.length > 0 && 
+      remainingStudents.every(student => newAttendance[student.enrollmentNo]);
+    setSelectAllChecked(allRemainingSelected);
   };
 
   // Submit attendance to backend
@@ -552,6 +595,19 @@ const AddAttendance = () => {
         </div>
       </div>
 
+      {/* Absentees Input */}
+      <div className="mb-6">
+        <label className="block font-medium text-gray-700 mb-2">Absentees (Comma Separated)</label>
+        <input
+          type="text"
+          value={absenteesInput}
+          onChange={(e) => handleAbsenteesInput(e.target.value)}
+          placeholder="e.g., 22N81A0501, 22N81A0502"
+          className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        <p className="text-sm text-gray-500 mt-1">Enter enrollment numbers separated by commas to automatically deselect absent students</p>
+      </div>
+
       {/* Status indicator */}
       {canAddAttendance && (
         <div className="mb-4 p-2 bg-green-100 text-green-800 rounded">
@@ -595,14 +651,16 @@ const AddAttendance = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredStudents.map((student) => (
-              <tr key={student._id}>
+            {filteredStudents.map((student) => {
+              const isAbsent = absenteesInput.split(',').map(e => e.trim()).filter(e => e).includes(student.enrollmentNo);
+              return (
+                <tr key={student._id} className={isAbsent ? 'bg-red-50' : ''}>
                 <td className="border border-gray-300 px-4 py-2">
                   <input
                     type="checkbox"
                     checked={!!markedAttendance[student.enrollmentNo]}
                     onChange={() => toggleAttendance(student)}
-                    disabled={!canAddAttendance || selectedSubject === "-- Select --" || selectedPeriod === "-- Select --"}
+                    disabled={!canAddAttendance || selectedSubject === "-- Select --" || selectedPeriod === "-- Select --" || absenteesInput.split(',').map(e => e.trim()).filter(e => e).includes(student.enrollmentNo)}
                   />
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
@@ -615,7 +673,8 @@ const AddAttendance = () => {
                 <td className="border border-gray-300 px-4 py-2">{student.section}</td>
                 <td className="border border-gray-300 px-4 py-2">{student.semester}</td>
               </tr>
-            ))}
+                );
+              })}
           </tbody>
         </table>
       )}
@@ -635,3 +694,4 @@ const AddAttendance = () => {
 };
 
 export default AddAttendance;
+
