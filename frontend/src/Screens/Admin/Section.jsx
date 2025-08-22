@@ -13,6 +13,7 @@ const Section = () => {
   const [section, setSection] = useState("-- Select --");
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [allStudents, setAllStudents] = useState([]);
+  const [selectedStudents, setSelectedStudents] = useState([]);
 
   // Fetch all students and branches
   useEffect(() => {
@@ -54,20 +55,43 @@ const Section = () => {
       }
 
       setFilteredStudents(result);
+      // Clear selected students when filters change
+      setSelectedStudents([]);
     };
 
     filter();
   }, [selectedBranch, semester, fromEnrollment, toEnrollment, allStudents]);
 
+  // Handle individual student selection
+  const handleStudentSelect = (enrollmentNo) => {
+    setSelectedStudents(prev => 
+      prev.includes(enrollmentNo)
+        ? prev.filter(id => id !== enrollmentNo)
+        : [...prev, enrollmentNo]
+    );
+  };
+
+  // Handle select all students
+  const handleSelectAll = () => {
+    if (selectedStudents.length === filteredStudents.length) {
+      setSelectedStudents([]);
+    } else {
+      setSelectedStudents(filteredStudents.map(s => s.enrollmentNo));
+    }
+  };
+
   const handleAssignSection = async () => {
     if (
       selectedBranch === "-- Select --" ||
       semester === "-- Select --" ||
-      !fromEnrollment ||
-      !toEnrollment ||
       section === "-- Select --"
     ) {
-      toast.error("All fields are required");
+      toast.error("Branch, Semester, and Section are required");
+      return;
+    }
+
+    if (selectedStudents.length === 0) {
+      toast.error("Please select at least one student");
       return;
     }
 
@@ -76,8 +100,7 @@ const Section = () => {
         branch: selectedBranch,
         semester,
         section,
-        fromEnrollment,
-        toEnrollment,
+        studentEnrollments: selectedStudents,
       });
 
       if (res.data.success) {
@@ -85,6 +108,8 @@ const Section = () => {
         // Refresh the student list
         const refresh = await axios.get(`${baseApiURL()}/student/details/getDetails2`);
         if (refresh.data.success) setAllStudents(refresh.data.students);
+        // Clear selected students
+        setSelectedStudents([]);
       } else {
         toast.error("Failed to assign section");
       }
@@ -101,7 +126,7 @@ const Section = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Section Management</h1>
-            <p className="text-gray-600 mt-2">Assign sections to students based on enrollment numbers</p>
+            <p className="text-gray-600 mt-2">Assign sections to students by selecting them individually or using enrollment ranges</p>
           </div>
         </div>
       </div>
@@ -154,7 +179,7 @@ const Section = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               >
                 <option>-- Select --</option>
-                {["A", "B", "C", "D"].map((sec) => (
+                {["A", "B", "C", "D", "SOC","WIPRO TRAINING", "ATT"].map((sec) => (
                   <option key={sec} value={sec}>
                     {sec}
                   </option>
@@ -205,9 +230,14 @@ const Section = () => {
               <FiUsers className="text-blue-600 text-lg" />
               <h3 className="text-xl font-semibold text-gray-800">Filtered Students</h3>
             </div>
-            <span className="text-sm text-gray-500">
-              {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} found
-            </span>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-500">
+                {selectedStudents.length} of {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} selected
+              </span>
+              <span className="text-sm text-gray-500">
+                {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} found
+              </span>
+            </div>
           </div>
         </div>
         
@@ -223,6 +253,14 @@ const Section = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={selectedStudents.length === filteredStudents.length && filteredStudents.length > 0}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                    </th>
                     <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Enrollment No</th>
                     <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Name</th>
                     <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Email</th>
@@ -235,6 +273,14 @@ const Section = () => {
                 <tbody className="divide-y divide-gray-200">
                   {filteredStudents.map((s) => (
                     <tr key={s.enrollmentNo} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedStudents.includes(s.enrollmentNo)}
+                          onChange={() => handleStudentSelect(s.enrollmentNo)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                      </td>
                       <td className="px-6 py-4 text-sm text-gray-900 font-medium">{s.enrollmentNo}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{`${s.firstName} ${s.middleName || ""} ${s.lastName}`}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{s.email}</td>
