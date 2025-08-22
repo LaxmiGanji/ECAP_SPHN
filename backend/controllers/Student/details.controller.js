@@ -137,24 +137,38 @@ const updateDetails2 = async (req, res) => {
 
 const assignSectionToStudents = async (req, res) => {
   try {
-    const { branch, semester, section, fromEnrollment, toEnrollment } = req.body;
+    const { branch, semester, section, fromEnrollment, toEnrollment, studentEnrollments } = req.body;
 
-    if (!branch || !semester || !section || !fromEnrollment || !toEnrollment) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+    if (!branch || !semester || !section) {
+      return res.status(400).json({ success: false, message: "Branch, semester, and section are required" });
     }
 
-    const result = await studentDetails.updateMany(
-      {
-        branch,
-        semester,
-        enrollmentNo: { $gte: fromEnrollment, $lte: toEnrollment }
-      },
-      { $set: { section } }
-    );
+    let query = { branch, semester };
+    let message = "";
+
+    // Check if using individual student selection (new method)
+    if (studentEnrollments && studentEnrollments.length > 0) {
+      query.enrollmentNo = { $in: studentEnrollments };
+      message = `${studentEnrollments.length} student(s) selected for section assignment`;
+    }
+    // Check if using enrollment range (old method)
+    else if (fromEnrollment && toEnrollment) {
+      query.enrollmentNo = { $gte: fromEnrollment, $lte: toEnrollment };
+      message = `Students from ${fromEnrollment} to ${toEnrollment} selected for section assignment`;
+    }
+    // If neither method is provided
+    else {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please provide either student enrollments array or enrollment range (fromEnrollment and toEnrollment)" 
+      });
+    }
+
+    const result = await studentDetails.updateMany(query, { $set: { section } });
 
     res.json({
       success: true,
-      message: `${result.modifiedCount} student(s) updated to section ${section}`
+      message: `${result.modifiedCount} student(s) updated to section ${section}. ${message}`
     });
   } catch (error) {
     res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
