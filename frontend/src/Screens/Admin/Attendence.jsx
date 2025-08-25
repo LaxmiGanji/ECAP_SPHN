@@ -1,5 +1,6 @@
 import { useState } from "react";
-import AddAttendance from "../Faculty/AddAttendance";
+import AddAttendance from "./AddAttendance";
+import DeleteAttendance from "./DeleteAttendance";
 import ViewTotalAttendance from "../Faculty/ViewTotalAttendance";
 import { FiUserCheck, FiEye } from "react-icons/fi";
 
@@ -47,6 +48,19 @@ const Attendence = () => {
               <span>View Total Attendance</span>
             </div>
           </button>
+          <button
+            className={`flex-1 px-6 py-4 text-center font-medium transition-all duration-200 ${
+              activeTab === "delete"
+                ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            }`}
+            onClick={() => setActiveTab("delete")}
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <FiEye className="w-5 h-5" />
+              <span>Delete Attendance</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -54,6 +68,7 @@ const Attendence = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         {activeTab === "add" && <AddAttendance />}
         {activeTab === "view" && <ViewTotalAttendance />}
+        {activeTab === "delete" && <DeleteAttendance />}
       </div>
     </div>
   );

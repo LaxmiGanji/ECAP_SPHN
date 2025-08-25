@@ -15,10 +15,14 @@ const ViewTotalAttendance = () => {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
+  const [selectedSection, setSelectedSection] = useState(""); // Added section filter
   const [enrollmentSearch, setEnrollmentSearch] = useState(""); // Search box state
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Sections available for filtering
+  const sections = ['A', 'B', 'C', 'D', 'SOC', 'WIPRO TRAINING', 'ATT'];
 
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -30,6 +34,18 @@ const ViewTotalAttendance = () => {
           const uniqueEnrollments = [
             ...new Set(response.data.attendance.map((item) => item.enrollmentNo)),
           ];
+          // Sort enrollment numbers in ascending order
+          uniqueEnrollments.sort((a, b) => {
+            const numA = parseInt(a, 10);
+            const numB = parseInt(b, 10);
+            
+            if (!isNaN(numA) && !isNaN(numB)) {
+              return numA - numB;
+            }
+            // If enrollment numbers are not purely numeric, sort as strings
+            return String(a).localeCompare(String(b), undefined, { numeric: true });
+          });
+          
           setEnrollmentNumbers(uniqueEnrollments);
         } else {
           setError(response.data.message);
@@ -98,11 +114,12 @@ const ViewTotalAttendance = () => {
       const summary = {};
 
       attendanceRecords.forEach((record) => {
-        const { enrollmentNo, subject, branch, semester } = record;
-        // Only include records matching selected branch/semester
+        const { enrollmentNo, subject, branch, semester, section } = record;
+        // Only include records matching selected branch/semester/section
         if (
           (!selectedBranch || branch === selectedBranch) &&
-          (!selectedSemester || String(semester) === String(selectedSemester))
+          (!selectedSemester || String(semester) === String(selectedSemester)) &&
+          (!selectedSection || section === selectedSection)
         ) {
           if (!summary[enrollmentNo]) summary[enrollmentNo] = {};
           if (!summary[enrollmentNo][subject]) summary[enrollmentNo][subject] = 0;
@@ -143,7 +160,7 @@ const ViewTotalAttendance = () => {
     } else {
       setStudentSubjectSummary({});
     }
-  }, [attendanceRecords, subjectTotals, selectedBranch, selectedSemester]);
+  }, [attendanceRecords, subjectTotals, selectedBranch, selectedSemester, selectedSection]);
 
   const handleSubjectChange = (e) => {
     setSelectedSubject(e.target.value);
@@ -155,6 +172,10 @@ const ViewTotalAttendance = () => {
 
   const handleSemesterChange = (e) => {
     setSelectedSemester(e.target.value);
+  };
+
+  const handleSectionChange = (e) => {
+    setSelectedSection(e.target.value);
   };
 
   const handleExportToExcel = () => {
@@ -169,12 +190,14 @@ const ViewTotalAttendance = () => {
               rec.enrollmentNo === student &&
               rec.subject === subject &&
               (!selectedBranch || rec.branch === selectedBranch) &&
-              (!selectedSemester || String(rec.semester) === String(selectedSemester))
+              (!selectedSemester || String(rec.semester) === String(selectedSemester)) &&
+              (!selectedSection || rec.section === selectedSection)
           );
           return {
             "Enrollment No": student,
             Branch: studentRecord?.branch || "",
             Semester: studentRecord?.semester || "",
+            Section: studentRecord?.section || "",
             Subject: subject,
             "Attended Classes": data.attended,
             "Total Classes": data.total,
@@ -190,12 +213,14 @@ const ViewTotalAttendance = () => {
           (rec) =>
             rec.enrollmentNo === student &&
             (!selectedBranch || rec.branch === selectedBranch) &&
-            (!selectedSemester || String(rec.semester) === String(selectedSemester))
+            (!selectedSemester || String(rec.semester) === String(selectedSemester)) &&
+            (!selectedSection || rec.section === selectedSection)
         );
         dataToExport.push({
           "Enrollment No": student,
           Branch: studentRecord?.branch || "",
           Semester: studentRecord?.semester || "",
+          Section: studentRecord?.section || "",
           Subject: "TOTAL",
           "Attended Classes": subjectsData.overallTotal.attended,
           "Total Classes": subjectsData.overallTotal.total,
@@ -213,7 +238,8 @@ const ViewTotalAttendance = () => {
             ? item["Enrollment No"].toLowerCase().includes(enrollmentSearch.toLowerCase())
             : true) &&
           (selectedBranch ? item.Branch === selectedBranch : true) &&
-          (selectedSemester ? item.Semester === parseInt(selectedSemester) : true)
+          (selectedSemester ? item.Semester === parseInt(selectedSemester) : true) &&
+          (selectedSection ? item.Section === selectedSection : true)
       )
       .sort((a, b) => {
         const numA = parseInt(a["Enrollment No"], 10);
@@ -292,6 +318,22 @@ const ViewTotalAttendance = () => {
         </div>
 
         <div>
+          <label className="mr-2">Section:</label>
+          <select
+            value={selectedSection}
+            onChange={handleSectionChange}
+            className="border rounded px-2 py-1"
+          >
+            <option value="">-- Select --</option>
+            {sections.map((section) => (
+              <option key={section} value={section}>
+                {section}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
           <label className="mr-2">Subject:</label>
           <select
             value={selectedSubject}
@@ -332,6 +374,7 @@ const ViewTotalAttendance = () => {
             <th className="py-2 px-4 text-left">Enrollment No</th>
             <th className="py-2 px-4 text-left">Branch</th>
             <th className="py-2 px-4 text-left">Semester</th>
+            <th className="py-2 px-4 text-left">Section</th>
             <th className="py-2 px-4 text-left">Subject</th>
             <th className="py-2 px-4 text-left">Attended Classes</th>
             <th className="py-2 px-4 text-left">Total Classes</th>
@@ -351,13 +394,15 @@ const ViewTotalAttendance = () => {
                       rec.enrollmentNo === student &&
                       rec.subject === subject &&
                       (!selectedBranch || rec.branch === selectedBranch) &&
-                      (!selectedSemester || String(rec.semester) === String(selectedSemester))
+                      (!selectedSemester || String(rec.semester) === String(selectedSemester)) &&
+                      (!selectedSection || rec.section === selectedSection)
                   );
                   rows.push({
                     student,
                     subject,
                     branch: studentRecord?.branch || "",
                     semester: studentRecord?.semester || "",
+                    section: studentRecord?.section || "",
                     attended: data.attended,
                     total: data.total,
                     subjectPercentage: data.percentage,
@@ -371,13 +416,15 @@ const ViewTotalAttendance = () => {
                   (rec) =>
                     rec.enrollmentNo === student &&
                     (!selectedBranch || rec.branch === selectedBranch) &&
-                    (!selectedSemester || String(rec.semester) === String(selectedSemester))
+                    (!selectedSemester || String(rec.semester) === String(selectedSemester)) &&
+                    (!selectedSection || rec.section === selectedSection)
                 );
                 rows.push({
                   student,
                   subject: "TOTAL",
                   branch: studentRecord?.branch || "",
                   semester: studentRecord?.semester || "",
+                  section: studentRecord?.section || "",
                   attended: subjectsData.overallTotal.attended,
                   total: subjectsData.overallTotal.total,
                   subjectPercentage: "N/A",
@@ -394,7 +441,8 @@ const ViewTotalAttendance = () => {
                   ? item.student.toLowerCase().includes(enrollmentSearch.toLowerCase())
                   : true) &&
                 (selectedBranch ? item.branch === selectedBranch : true) &&
-                (selectedSemester ? item.semester === parseInt(selectedSemester) : true)
+                (selectedSemester ? item.semester === parseInt(selectedSemester) : true) &&
+                (selectedSection ? item.section === selectedSection : true)
             )
             // Sort enrollment numbers in ascending order
             .sort((a, b) => {
@@ -424,6 +472,7 @@ const ViewTotalAttendance = () => {
                 <td className="py-2 px-4">{item.student}</td>
                 <td className="py-2 px-4">{item.branch}</td>
                 <td className="py-2 px-4">{item.semester}</td>
+                <td className="py-2 px-4">{item.section}</td>
                 <td className="py-2 px-4">{item.subject}</td>
                 <td className="py-2 px-4">{item.attended}</td>
                 <td className="py-2 px-4">{item.total}</td>
