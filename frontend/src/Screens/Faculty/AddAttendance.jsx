@@ -26,6 +26,7 @@ const AddAttendance = () => {
   const [loading, setLoading] = useState(false);
   const [canAddAttendance, setCanAddAttendance] = useState(false);
   const [absenteesInput, setAbsenteesInput] = useState("");
+  const [presenteesInput, setPresenteesInput] = useState("");
   const [facultyData, setFacultyData] = useState(null);
 
   // Days available for selection
@@ -109,6 +110,8 @@ const AddAttendance = () => {
     setCanAddAttendance(false);
     setMarkedAttendance({});
     setSelectAllChecked(false);
+    setAbsenteesInput("");
+    setPresenteesInput("");
   };
 
   // Handle period change
@@ -127,6 +130,8 @@ const AddAttendance = () => {
       setCanAddAttendance(false);
       setMarkedAttendance({});
       setSelectAllChecked(false);
+      setAbsenteesInput("");
+      setPresenteesInput("");
       return;
     }
 
@@ -145,6 +150,8 @@ const AddAttendance = () => {
         setCanAddAttendance(false);
         setMarkedAttendance({});
         setSelectAllChecked(false);
+        setAbsenteesInput("");
+        setPresenteesInput("");
         return;
       }
 
@@ -190,6 +197,8 @@ const AddAttendance = () => {
       // Clear attendance selections
       setMarkedAttendance({});
       setSelectAllChecked(false);
+      setAbsenteesInput("");
+      setPresenteesInput("");
     } else {
       // No timetable entry found for this day/period combination
       toast.error(`No class scheduled for ${selectedDay} Period ${newPeriod}`);
@@ -198,10 +207,12 @@ const AddAttendance = () => {
       setSelectedSection("-- Select --");
       setSemester("-- Select --");
       setSelectedSubjectId(null);
-        setTotalClasses("");
-        setCanAddAttendance(false);
-        setMarkedAttendance({});
-        setSelectAllChecked(false);
+      setTotalClasses("");
+      setCanAddAttendance(false);
+      setMarkedAttendance({});
+      setSelectAllChecked(false);
+      setAbsenteesInput("");
+      setPresenteesInput("");
     }
   };
 
@@ -506,6 +517,81 @@ const AddAttendance = () => {
     setFilteredStudents(filtered);
   };
 
+  // Handle presentees input
+  const handlePresenteesInput = (input) => {
+    setPresenteesInput(input);
+    
+    if (!input.trim()) {
+      return; // If input is empty, don't change anything
+    }
+    
+    // Clear absentees input when using presentees
+    if (absenteesInput) {
+      setAbsenteesInput("");
+    }
+    
+    // Split by comma and clean up whitespace
+    const presentees = input.split(',').map(enrollment => enrollment.trim()).filter(enrollment => enrollment);
+    
+    // Create new attendance state with only presentees
+    const newAttendance = {};
+    
+    // Add all presentees to attendance
+    filteredStudents.forEach((student) => {
+      if (presentees.includes(student.enrollmentNo)) {
+        newAttendance[student.enrollmentNo] = {
+          enrollmentNo: student.enrollmentNo,
+          name: `${student.firstName} ${student.lastName}`,
+          branch: student.branch,
+          section: student.section,
+          subject: selectedSubject,
+          period: selectedPeriod,
+          semester: semester,
+          date: selectedDate,
+        };
+      }
+    });
+    
+    setMarkedAttendance(newAttendance);
+    
+    // Update select all checkbox state
+    const allPresenteesSelected = presentees.length > 0 && 
+      presentees.every(enrollment => newAttendance[enrollment]);
+    setSelectAllChecked(allPresenteesSelected);
+  };
+
+  // Handle absentees input
+  const handleAbsenteesInput = (input) => {
+    setAbsenteesInput(input);
+    
+    if (!input.trim()) {
+      return; // If input is empty, don't change anything
+    }
+    
+    // Clear presentees input when using absentees
+    if (presenteesInput) {
+      setPresenteesInput("");
+    }
+    
+    // Split by comma and clean up whitespace
+    const absentees = input.split(',').map(enrollment => enrollment.trim()).filter(enrollment => enrollment);
+    
+    // Create new attendance state excluding absentees
+    const newAttendance = {};
+    Object.keys(markedAttendance).forEach(enrollmentNo => {
+      if (!absentees.includes(enrollmentNo)) {
+        newAttendance[enrollmentNo] = markedAttendance[enrollmentNo];
+      }
+    });
+    
+    setMarkedAttendance(newAttendance);
+    
+    // Update select all checkbox state
+    const remainingStudents = filteredStudents.filter(student => !absentees.includes(student.enrollmentNo));
+    const allRemainingSelected = remainingStudents.length > 0 && 
+      remainingStudents.every(student => newAttendance[student.enrollmentNo]);
+    setSelectAllChecked(allRemainingSelected);
+  };
 
   // Toggle individual attendance (local state only)
   const toggleAttendance = (student) => {
@@ -529,6 +615,11 @@ const AddAttendance = () => {
     if (absentees.includes(student.enrollmentNo)) {
       toast.error("Cannot mark attendance for absent student. Remove from absentees list first.");
       return;
+    }
+    
+    // Clear presentees input when manually toggling attendance
+    if (presenteesInput) {
+      setPresenteesInput("");
     }
     
     setMarkedAttendance((prev) => {
@@ -567,6 +658,12 @@ const AddAttendance = () => {
       toast.error("Incomplete timetable data. Cannot mark attendance until all fields are properly populated.");
       return;
     }
+    
+    // Clear presentees input when using select all
+    if (presenteesInput) {
+      setPresenteesInput("");
+    }
+    
     const newSelectAllChecked = !selectAllChecked;
     setSelectAllChecked(newSelectAllChecked);
     if (newSelectAllChecked) {
@@ -612,34 +709,6 @@ const AddAttendance = () => {
     }
   }, [selectedDate]);
 
-  // Handle absentees input
-  const handleAbsenteesInput = (input) => {
-    setAbsenteesInput(input);
-    
-    if (!input.trim()) {
-      return; // If input is empty, don't change anything
-    }
-    
-    // Split by comma and clean up whitespace
-    const absentees = input.split(',').map(enrollment => enrollment.trim()).filter(enrollment => enrollment);
-    
-    // Create new attendance state excluding absentees
-    const newAttendance = {};
-    Object.keys(markedAttendance).forEach(enrollmentNo => {
-      if (!absentees.includes(enrollmentNo)) {
-        newAttendance[enrollmentNo] = markedAttendance[enrollmentNo];
-      }
-    });
-    
-    setMarkedAttendance(newAttendance);
-    
-    // Update select all checkbox state
-    const remainingStudents = filteredStudents.filter(student => !absentees.includes(student.enrollmentNo));
-    const allRemainingSelected = remainingStudents.length > 0 && 
-      remainingStudents.every(student => newAttendance[student.enrollmentNo]);
-    setSelectAllChecked(allRemainingSelected);
-  };
-
   // Submit attendance to backend
   const handleSubmitAttendance = async () => {
     if (!canAddAttendance) {
@@ -674,6 +743,8 @@ const AddAttendance = () => {
         toast.success("Attendance submitted successfully!");
         setMarkedAttendance({});
         setSelectAllChecked(false);
+        setAbsenteesInput("");
+        setPresenteesInput("");
       } else {
         toast.error(response.data.message || "Failed to submit attendance.");
       }
@@ -881,6 +952,19 @@ const AddAttendance = () => {
             −
           </button>
         </div>
+      </div>
+
+      {/* Presentees Input */}
+      <div className="mb-4">
+        <label className="block font-medium text-gray-700 mb-2">Presentees (Comma Separated)</label>
+        <input
+          type="text"
+          value={presenteesInput}
+          onChange={(e) => handlePresenteesInput(e.target.value)}
+          placeholder="e.g., 22N81A0501, 22N81A0502"
+          className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        <p className="text-sm text-gray-500 mt-1">Enter enrollment numbers separated by commas to automatically select only these students</p>
       </div>
 
       {/* Absentees Input */}
