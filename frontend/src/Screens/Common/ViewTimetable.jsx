@@ -269,7 +269,7 @@ const ViewTimetable = () => {
           disabled={editMode}
         >
           <option value="">Select Section</option>
-          {["A", "B", "C", "D"].map((sec) => (
+          {["A", "B", "C", "D", "SOC", "WIPRO TRAINING", "ATT"].map((sec) => (
             <option key={sec} value={sec}>Section {sec}</option>
           ))}
         </select>

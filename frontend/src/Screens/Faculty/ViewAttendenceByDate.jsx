@@ -9,7 +9,7 @@ const ViewAttendenceByDate = () => {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [branches, setBranches] = useState([]);
-  const [sections, setSections] = useState(["A", "B", "C", "D"]);
+  const [sections, setSections] = useState(["A", "B", "C", "D", "SOC", "WIPRO TRAINING", "ATT"]);
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
@@ -29,14 +29,14 @@ const ViewAttendenceByDate = () => {
     period: "",
   });
 
-  const [allSubjects, setAllSubjects] = useState([]); // Store all subjects
+  const [allSubjects, setAllSubjects] = useState([]);
 
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
         const response = await axios.get(`${baseApiURL()}/subject/getSubject`);
         if (response.data.success) {
-          setAllSubjects(response.data.subject); // Store all subject objects
+          setAllSubjects(response.data.subject);
         }
       } catch (error) {
         console.error("Error fetching subjects:", error);
@@ -128,7 +128,6 @@ const ViewAttendenceByDate = () => {
     }
   };
 
-  // Edit Attendance
   const openEditModal = (record) => {
     setEditRecord(record);
     setEditForm({
@@ -225,194 +224,224 @@ const ViewAttendenceByDate = () => {
 
   if (loading) {
     return (
-      <div className="text-center mt-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p className="mt-3">Loading attendance records...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+        <p className="text-gray-600">Loading attendance records...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="alert alert-danger text-center mt-5" role="alert">
-        {error}
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded max-w-md w-full">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error}</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="flex flex-col sm:flex-row justify-start gap-4 mb-4 flex-wrap">
-        <div>
-          <label className="mr-2">Branch:</label>
-          <select
-            value={selectedBranch}
-            onChange={handleBranchChange}
-            className="border rounded px-2 py-1"
-          >
-            <option value="">All Branches</option>
-            {branches.map((branch) => (
-              <option key={branch} value={branch}>
-                {branch}
-              </option>
-            ))}
-          </select>
+    <div className="container mx-auto p-4 bg-gray-50 min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Attendance by Date</h1>
+      
+      {/* Filters Section */}
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+            <select
+              value={selectedBranch}
+              onChange={handleBranchChange}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Branches</option>
+              {branches.map((branch) => (
+                <option key={branch} value={branch}>
+                  {branch}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+            <select
+              value={selectedSemester}
+              onChange={handleSemesterChange}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Semesters</option>
+              {[1,2,3,4,5,6,7,8].map((sem) => (
+                <option key={sem} value={sem}>{sem}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+            <select
+              value={selectedSection}
+              onChange={handleSectionChange}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Sections</option>
+              {sections.map((section) => (
+                <option key={section} value={section}>{section}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+            <select
+              value={selectedSubject}
+              onChange={handleSubjectChange}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Subjects</option>
+              {subjects.map((subject) => (
+                <option key={subject} value={subject}>
+                  {subject}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+            <DatePicker
+              selected={startDate}
+              onChange={handleStartDateChange}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              placeholderText="Select start date"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              maxDate={new Date()}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+            <DatePicker
+              selected={endDate}
+              onChange={handleEndDateChange}
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              minDate={startDate}
+              maxDate={new Date()}
+              placeholderText="Select end date"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div className="flex items-end">
+            <button
+              onClick={clearFilters}
+              className="w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-200"
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
-        <div>
-          <label className="mr-2">Semester:</label>
-          <select
-            value={selectedSemester}
-            onChange={handleSemesterChange}
-            className="border rounded px-2 py-1"
-          >
-            <option value="">All Semesters</option>
-            {[1,2,3,4,5,6,7,8].map((sem) => (
-              <option key={sem} value={sem}>{sem}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mr-2">Section:</label>
-          <select
-            value={selectedSection}
-            onChange={handleSectionChange}
-            className="border rounded px-2 py-1"
-          >
-            <option value="">All Sections</option>
-            {sections.map((section) => (
-              <option key={section} value={section}>{section}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mr-2">Subject:</label>
-          <select
-            value={selectedSubject}
-            onChange={handleSubjectChange}
-            className="border rounded px-2 py-1"
-          >
-            <option value="">All Subjects</option>
-            {subjects.map((subject) => (
-              <option key={subject} value={subject}>
-                {subject}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mr-2">From Date:</label>
-          <DatePicker
-            selected={startDate}
-            onChange={handleStartDateChange}
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            placeholderText="Select start date"
-            className="border rounded px-2 py-1"
-            maxDate={new Date()}
-          />
-        </div>
-        <div>
-          <label className="mr-2">To Date:</label>
-          <DatePicker
-            selected={endDate}
-            onChange={handleEndDateChange}
-            selectsEnd
-            startDate={startDate}
-            endDate={endDate}
-            minDate={startDate}
-            maxDate={new Date()}
-            placeholderText="Select end date"
-            className="border rounded px-2 py-1"
-          />
-        </div>
-        <button
-          onClick={clearFilters}
-          className="bg-gray-500 text-white px-4 py-2 rounded"
-        >
-          Clear Filters
-        </button>
       </div>
 
-
+      {/* Table Section */}
       {attendanceRecords.length === 0 ? (
-        <div className="text-center mt-5">
-          <p>No attendance records found for the selected filters.</p>
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No records found</h3>
+          <p className="mt-1 text-sm text-gray-500">No attendance records found for the selected filters.</p>
         </div>
       ) : (
-        <table className="min-w-full table-auto">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="py-2 px-4 text-left">Enrollment No</th>
-              <th className="py-2 px-4 text-left">Name</th>
-              <th className="py-2 px-4 text-left">Branch</th>
-              <th className="py-2 px-4 text-left">Semester</th>
-              <th className="py-2 px-4 text-left">Section</th>
-              <th className="py-2 px-4 text-left">Subject</th>
-              <th className="py-2 px-4 text-left">Period</th>
-              <th className="py-2 px-4 text-left">Date</th>
-              <th className="py-2 px-4 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {attendanceRecords
-              .filter(record =>
-                (!selectedBranch || record.branch === selectedBranch) &&
-                (!selectedSemester || String(record.semester) === String(selectedSemester)) &&
-                (!selectedSection || record.section === selectedSection) &&
-                (!selectedSubject || record.subject === selectedSubject)
-              )
-              // Sort enrollment numbers in ascending order
-              .sort((a, b) => {
-                const aNum = Number(a.enrollmentNo);
-                const bNum = Number(b.enrollmentNo);
-                if (!isNaN(aNum) && !isNaN(bNum)) {
-                  return aNum - bNum;
-                }
-                return String(a.enrollmentNo).localeCompare(String(b.enrollmentNo));
-              })
-              .map((record) => (
-                <tr key={record._id} className="border-b">
-                  <td className="py-2 px-4">{record.enrollmentNo}</td>
-                  <td className="py-2 px-4">{record.name}</td>
-                  <td className="py-2 px-4">{record.branch}</td>
-                  <td className="py-2 px-4">{record.semester}</td>
-                  <td className="py-2 px-4">{record.section}</td>
-                  <td className="py-2 px-4">{record.subject}</td>
-                  <td className="py-2 px-4">{record.period}</td>
-                  <td className="py-2 px-4">
-                    {new Date(record.date).toLocaleDateString()}
-                  </td>
-                  <td className="py-2 px-4 flex gap-2">
-                    <button
-                      onClick={() => handleDeleteAttendance(record._id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                    >
-                      Delete
-                    </button>
-                  </td>
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Enrollment No</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Branch</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Semester</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Section</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Subject</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Period</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {attendanceRecords
+                  .filter(record =>
+                    (!selectedBranch || record.branch === selectedBranch) &&
+                    (!selectedSemester || String(record.semester) === String(selectedSemester)) &&
+                    (!selectedSection || record.section === selectedSection) &&
+                    (!selectedSubject || record.subject === selectedSubject)
+                  )
+                  .sort((a, b) => {
+                    const aNum = Number(a.enrollmentNo);
+                    const bNum = Number(b.enrollmentNo);
+                    if (!isNaN(aNum) && !isNaN(bNum)) {
+                      return aNum - bNum;
+                    }
+                    return String(a.enrollmentNo).localeCompare(String(b.enrollmentNo));
+                  })
+                  .map((record, index) => (
+                    <tr key={record._id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{record.enrollmentNo}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{record.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{record.branch}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{record.semester}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{record.section}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{record.subject}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{record.period}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                        {new Date(record.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => openEditModal(record)}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAttendance(record._id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
-
 
       {/* Edit Modal */}
       {editModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4">Edit Attendance</h3>
-            <form onSubmit={handleEditSubmit} className="space-y-3">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800">Edit Attendance Record</h3>
+            </div>
+            <form onSubmit={handleEditSubmit} className="px-6 py-4 space-y-4">
               <div>
-                <label className="block mb-1">Branch</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
                 <select
                   name="branch"
                   value={editForm.branch}
                   onChange={handleEditChange}
-                  className="border rounded px-2 py-1 w-full"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
                   <option value="">Select Branch</option>
@@ -422,12 +451,12 @@ const ViewAttendenceByDate = () => {
                 </select>
               </div>
               <div>
-                <label className="block mb-1">Semester</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
                 <select
                   name="semester"
                   value={editForm.semester}
                   onChange={handleEditChange}
-                  className="border rounded px-2 py-1 w-full"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
                   <option value="">Select Semester</option>
@@ -437,12 +466,12 @@ const ViewAttendenceByDate = () => {
                 </select>
               </div>
               <div>
-                <label className="block mb-1">Section</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
                 <select
                   name="section"
                   value={editForm.section}
                   onChange={handleEditChange}
-                  className="border rounded px-2 py-1 w-full"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
                   <option value="">Select Section</option>
@@ -452,12 +481,12 @@ const ViewAttendenceByDate = () => {
                 </select>
               </div>
               <div>
-                <label className="block mb-1">Subject</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
                 <select
                   name="subject"
                   value={editForm.subject}
                   onChange={handleEditChange}
-                  className="border rounded px-2 py-1 w-full"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
                   <option value="">Select Subject</option>
@@ -467,39 +496,39 @@ const ViewAttendenceByDate = () => {
                 </select>
               </div>
               <div>
-                <label className="block mb-1">Period</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Period</label>
                 <input
                   type="text"
                   name="period"
                   value={editForm.period}
                   onChange={handleEditChange}
-                  className="border rounded px-2 py-1 w-full"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
               <div>
-                <label className="block mb-1">Date</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                 <DatePicker
                   selected={editForm.date}
                   onChange={handleEditDateChange}
-                  className="border rounded px-2 py-1 w-full"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                   maxDate={new Date()}
                 />
               </div>
-              <div className="flex justify-end gap-2 mt-4">
+              <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setEditModal(false)}
-                  className="bg-gray-400 text-white px-4 py-2 rounded"
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-green-600 text-white px-4 py-2 rounded"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  Save
+                  Save Changes
                 </button>
               </div>
             </form>
