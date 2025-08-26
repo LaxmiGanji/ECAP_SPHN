@@ -50,6 +50,11 @@ const studentDetails = new mongoose.Schema({
     type: String,
     required: true,
   },
+  batch: {
+    type: Number,
+    required: true,
+    index: true,
+  },
   gender: {
     type: String,
     required: false,

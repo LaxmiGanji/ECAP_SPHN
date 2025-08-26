@@ -17,6 +17,7 @@ const {
   assignBooksToStudent,
   returnBooks,
   searchStudents,
+  getStudentsByBatchAndBranch,
 } = require("../../controllers/Student/details.controller.js");
 
 // Routes
@@ -32,6 +33,7 @@ router.get("/count", getCount);
 router.post("/assignBooks", assignBooksToStudent);
 router.post("/returnBooks", returnBooks);
 router.get("/search", searchStudents);
+router.get("/reports/byBatchBranch", getStudentsByBatchAndBranch);
 router.get("/findByBook", async (req, res) => {
   try {
     const { bookId } = req.query;

@@ -29,6 +29,11 @@ const facultyDetails = new mongoose.Schema({
     type: String,
     required: true,
   },
+  batch: {
+    type: Number,
+    required: false,
+    index: true,
+  },
   gender: {
     type: String,
     required: false,

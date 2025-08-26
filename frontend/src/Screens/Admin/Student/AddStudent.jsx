@@ -21,6 +21,7 @@ const AddStudent = () => {
     MotherPhoneNumber: "",
     semester: "",
     branch: "",
+    batch: "",
     gender: "",
   });
 
@@ -107,6 +108,7 @@ const AddStudent = () => {
       MotherPhoneNumber: "",
       semester: "",
       branch: "",
+      batch: "",
       gender: "",
     });
     setPreviewImage("");
@@ -287,6 +289,26 @@ const AddStudent = () => {
                       <option value="6">6th Semester</option>
                       <option value="7">7th Semester</option>
                       <option value="8">8th Semester</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="batch" className="block text-sm font-medium text-gray-700 mb-2">
+                      Batch Year *
+                    </label>
+                    <select
+                      id="batch"
+                      required
+                      value={data.batch}
+                      onChange={(e) => setData({ ...data, batch: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    >
+                      <option value="">Select batch year</option>
+                      {Array.from({ length: 8 }).map((_, idx) => {
+                        const year = new Date().getFullYear() - idx;
+                        return (
+                          <option key={year} value={year}>{year}</option>
+                        );
+                      })}
                     </select>
                   </div>
                 </div>

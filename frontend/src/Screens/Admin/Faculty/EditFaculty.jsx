@@ -15,6 +15,7 @@ const EditFaculty = () => {
     email: "",
     phoneNumber: "",
     department: "",
+    batch: "",
     gender: "",
     experience: "",
     post: "",
@@ -48,6 +49,7 @@ const EditFaculty = () => {
     formData.append("email", data.email);
     formData.append("phoneNumber", data.phoneNumber);
     formData.append("department", data.department);
+    if (data.batch) formData.append("batch", data.batch);
     formData.append("experience", data.experience);
     formData.append("gender", data.gender);
     formData.append("post", data.post);
@@ -106,6 +108,7 @@ const EditFaculty = () => {
             phoneNumber: response.data.user[0].phoneNumber,
             post: response.data.user[0].post,
             department: response.data.user[0].department,
+            batch: response.data.user[0].batch || "",
             gender: response.data.user[0].gender,
             profile: response.data.user[0].profile,
             experience: response.data.user[0].experience,
@@ -135,6 +138,7 @@ const EditFaculty = () => {
       email: "",
       phoneNumber: "",
       department: "",
+      batch: "",
       gender: "",
       experience: "",
       post: "",
@@ -176,6 +180,27 @@ const EditFaculty = () => {
           onSubmit={updateFacultyProfile}
           className="w-[70%] flex justify-center items-center flex-wrap gap-6 mx-auto mt-10"
         >
+          <div className="w-[40%]">
+            <label htmlFor="batch" className="leading-7 text-sm ">
+              Batch Year
+            </label>
+            <select
+              id="batch"
+              className="px-2 bg-blue-50 py-3 rounded-sm text-base w-full accent-blue-700 mt-1"
+              value={data.batch}
+              onChange={(e) => setData({ ...data, batch: e.target.value })}
+            >
+              <option defaultValue>-- Select --</option>
+              {Array.from({ length: 8 }).map((_, idx) => {
+                const year = new Date().getFullYear() - idx;
+                return (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
           <div className="w-[40%]">
             <label htmlFor="firstname" className="leading-7 text-sm ">
               Enter First Name

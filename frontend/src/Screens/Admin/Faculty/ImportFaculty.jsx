@@ -10,6 +10,7 @@ const ImportFaculty = () => {
   const [fileName, setFileName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [batchSize, setBatchSize] = useState(10); // Default batch size
+  const [overwrite, setOverwrite] = useState(true);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -23,6 +24,7 @@ const ImportFaculty = () => {
     toast.loading("Downloading template file");
     
     // Create template with 5 sample records
+    const currentYear = new Date().getFullYear();
     const templateData = Array.from({ length: 5 }, (_, i) => ({
       employeeId: `EMP00${i+1}`,
       firstName: `First${i+1}`,
@@ -31,6 +33,7 @@ const ImportFaculty = () => {
       email: `faculty${i+1}@example.com`,
       phoneNumber: `9876543210${10+i}`,
       department: ["CSE", "CSE-CS", "CSE-DS", "CSE-AIML", "CSE-IOT"][i%5],
+      batch: `${currentYear - (i % 4)}`,
       gender: i%2 === 0 ? "Male" : "Female",
       experience: `${i+1}`,
       post: ["Asst. Prof", "Assoc. Prof", "Professor", "Lecturer", "HOD"][i%5],
@@ -50,11 +53,15 @@ const ImportFaculty = () => {
   // Process a single faculty member
   const processSingleFaculty = async (faculty) => {
     try {
+      if (!faculty.employeeId) {
+        return { success: false, message: "Missing employeeId" };
+      }
       const formData = new FormData();
       Object.entries(faculty).forEach(([key, value]) => {
         formData.append(key, value);
       });
       formData.append('type', 'excel-import');
+      formData.append('overwrite', overwrite ? 'true' : 'false');
 
       // Add faculty details
       const detailsResponse = await axios.post(
@@ -63,11 +70,19 @@ const ImportFaculty = () => {
       );
 
       if (detailsResponse.data.success) {
-        // Create credentials
-        await axios.post(`${baseApiURL()}/faculty/auth/register`, {
-          loginid: faculty.employeeId,
-          password: faculty.employeeId,
-        });
+        try {
+          // Create credentials idempotently
+          await axios.post(`${baseApiURL()}/faculty/auth/register`, {
+            loginid: faculty.employeeId,
+            password: faculty.employeeId,
+          });
+        } catch (regErr) {
+          const msg = regErr?.response?.data?.message?.toString().toLowerCase() || "";
+          const isAlreadyExists = msg.includes("already exists") || msg.includes("exists");
+          if (!isAlreadyExists) {
+            return { success: false, message: regErr?.response?.data?.message || regErr.message };
+          }
+        }
         return { success: true };
       }
       return { success: false, message: detailsResponse.data.message };
@@ -211,6 +226,12 @@ const ImportFaculty = () => {
           </div>
 
           <div>
+            <div className="mb-6">
+              <label className="inline-flex items-center space-x-2">
+                <input type="checkbox" className="form-checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} />
+                <span className="text-sm">Overwrite existing faculty on import</span>
+              </label>
+            </div>
             <div className="mb-6">
               <label htmlFor="batch-size" className="block text-sm font-medium text-gray-700 mb-2">
                 Records per batch

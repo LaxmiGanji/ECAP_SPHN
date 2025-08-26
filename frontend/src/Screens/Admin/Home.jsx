@@ -17,6 +17,7 @@ import Attendance from "./Attendence";
 import Library from "./Library";
 import Section from "./Section";
 import Timetables from "./Timetables";
+import Reports from "./Reports";
 
 const Home = () => {
   const router = useLocation();
@@ -110,6 +111,8 @@ const Home = () => {
         return <Attendance />;
       case "Section":
         return <Section />;
+      case "Reports":
+        return <Reports />;
       default:
         return <Profile />;
     }

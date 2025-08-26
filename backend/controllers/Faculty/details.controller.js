@@ -24,27 +24,52 @@ const getDetails = async (req, res) => {
 const addDetails = async (req, res) => {
     try {
       const data = req.body;
+      const employeeId = (data.employeeId || data.loginid || "").toString().trim();
+      if (!employeeId) {
+        return res.status(400).json({ success: false, message: "employeeId is required" });
+      }
+
+      // Normalize optional batch
+      if (typeof data.batch !== 'undefined' && data.batch !== null && data.batch !== '') {
+        const parsedBatch = parseInt(data.batch, 10);
+        if (!Number.isFinite(parsedBatch)) {
+          return res.status(400).json({ success: false, message: "Batch must be a valid year" });
+        }
+        data.batch = parsedBatch;
+      }
+
       const { phoneNumber } = data;
-  
       if (!validatePhoneNumber(phoneNumber)) {
         return res.status(400).json({ success: false, message: "Invalid phone number. Must be 10 digits starting with 6-9." });
       }
-  
-      let user = await facultyDetails.findOne({ employeeId: data.employeeId });
-      if (user) {
+
+      const rawType = (data?.type || "").toString().toLowerCase();
+      const rawOverwrite = (data?.overwrite ?? "").toString().toLowerCase();
+      const isExcelImport = rawType === "excel-import" || rawType === "excel" || rawType === "import";
+      const allowOverwrite = rawOverwrite === "true" || rawOverwrite === "1" || rawOverwrite === "yes" || rawOverwrite === "on";
+
+      let existing = await facultyDetails.findOne({ employeeId });
+      if (existing) {
+        if (isExcelImport && allowOverwrite) {
+          const updatePayload = { ...data };
+          delete updatePayload.type;
+          delete updatePayload.overwrite;
+          if (req.file?.filename) updatePayload.profile = req.file.filename;
+          await facultyDetails.updateOne({ employeeId }, { $set: updatePayload });
+          return res.json({ success: true, message: "Faculty Details Updated (Import Overwrite)!" });
+        }
         return res.status(400).json({
           success: false,
           message: "Faculty With This EmployeeId Already Exists",
         });
       }
-  
+
       // Handle profile picture - use default if not provided
       const profileData = req.file 
-        ? { ...data, profile: req.file.filename }
-        : { ...data, profile: 'default-profile.png' };
-  
-      user = await facultyDetails.create(profileData);
-      
+        ? { ...data, employeeId, profile: req.file.filename }
+        : { ...data, employeeId, profile: 'default-profile.png' };
+
+      const user = await facultyDetails.create(profileData);
       const response = {
         success: true,
         message: "Faculty Details Added!",
@@ -55,7 +80,7 @@ const addDetails = async (req, res) => {
       console.error(error);
       res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-  }
+}
 
 const updateDetails = async (req, res) => {
     try {
@@ -165,4 +190,29 @@ const updateTimetable = async (req, res) => {
   }
 };
 
-module.exports = { getDetails, addDetails, updateDetails, deleteDetails, getCount, updateTimetable}
+const getFacultyByBatchAndBranch = async (req, res) => {
+  try {
+    const { batch, branch } = req.query;
+    const filter = {};
+    if (batch) {
+      const parsed = parseInt(batch, 10);
+      if (!Number.isFinite(parsed)) {
+        return res.status(400).json({ success: false, message: "Invalid batch" });
+      }
+      filter.batch = parsed;
+    }
+    if (branch) {
+      // Map branch to department for faculty
+      filter.department = branch;
+    }
+    if (Object.keys(filter).length === 0) {
+      return res.status(400).json({ success: false, message: "Provide at least batch or branch" });
+    }
+    const faculties = await facultyDetails.find(filter);
+    return res.json({ success: true, count: faculties.length, faculties });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
+  }
+};
+
+module.exports = { getDetails, addDetails, updateDetails, deleteDetails, getCount, updateTimetable, getFacultyByBatchAndBranch }

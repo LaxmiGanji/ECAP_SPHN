@@ -10,6 +10,7 @@ const ImportStudent = () => {
   const [fileName, setFileName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [batchSize, setBatchSize] = useState(10); // Default batch size
+  const [overwrite, setOverwrite] = useState(true); // Allow overwrite existing
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -22,6 +23,7 @@ const ImportStudent = () => {
   const downloadTemplateHandler = () => {
     toast.loading("Downloading template file");
     // Create template with 5 sample records
+    const currentYear = new Date().getFullYear();
     const templateData = Array.from({ length: 5 }, (_, i) => ({
       enrollmentNo: `22N81A05${String(i + 1).padStart(2, '0')}`,
       firstName: `First${i + 1}`,
@@ -35,6 +37,7 @@ const ImportStudent = () => {
       MotherPhoneNumber: `98765432${30 + i}`,
       semester: `${(i % 8) + 1}`,
       branch: ["CSE", "ECE", "MECH", "CIVIL", "EEE"][i % 5],
+      batch: `${currentYear - (i % 4)}`,
       gender: i % 2 === 0 ? "Male" : "Female",
     }));
     const ws = XLSX.utils.json_to_sheet(templateData);
@@ -48,22 +51,35 @@ const ImportStudent = () => {
   // Process a single student
   const processSingleStudent = async (student) => {
     try {
+      if (!student.batch) {
+        return { success: false, message: "Missing required field 'batch'" };
+      }
       const formData = new FormData();
       Object.entries(student).forEach(([key, value]) => {
         formData.append(key, value);
       });
       formData.append('type', 'excel-import');
+      formData.append('overwrite', overwrite ? 'true' : 'false');
       // Add student details
       const detailsResponse = await axios.post(
         `${baseApiURL()}/student/details/addDetails`,
         formData
       );
       if (detailsResponse.data.success) {
-        // Create credentials
-        await axios.post(`${baseApiURL()}/student/auth/register`, {
-          loginid: student.enrollmentNo,
-          password: student.enrollmentNo,
-        });
+        try {
+          // Create credentials (idempotent): ignore if already exists
+          await axios.post(`${baseApiURL()}/student/auth/register`, {
+            loginid: student.enrollmentNo,
+            password: student.enrollmentNo,
+          });
+        } catch (regErr) {
+          const msg = regErr?.response?.data?.message?.toString().toLowerCase() || "";
+          const isAlreadyExists = msg.includes("already exists") || msg.includes("exists");
+          if (!isAlreadyExists) {
+            // Registration failed for another reason
+            return { success: false, message: regErr?.response?.data?.message || regErr.message };
+          }
+        }
         return { success: true };
       }
       return { success: false, message: detailsResponse.data.message };
@@ -193,6 +209,12 @@ const ImportStudent = () => {
             )}
           </div>
           <div>
+            <div className="mb-6">
+              <label className="inline-flex items-center space-x-2">
+                <input type="checkbox" className="form-checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} />
+                <span className="text-sm">Overwrite existing students on import</span>
+              </label>
+            </div>
             <div className="mb-6">
               <label htmlFor="batch-size" className="block text-sm font-medium text-gray-700 mb-2">
                 Records per batch

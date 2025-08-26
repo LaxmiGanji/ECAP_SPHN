@@ -57,11 +57,41 @@ const addDetails = async (req, res) => {
      // return res.status(400).json({ success: false, message: "Invalid phone number. Must be 10 digits starting with 6-9." });
    // }
     // Removed email validation
-    const existing = await studentDetails.findOne({ enrollmentNo: req.body.enrollmentNo });
+    const enrollment = (req.body.enrollmentNo || req.body.enrollment || req.body.loginid || "").toString().trim();
+    if (!enrollment) {
+      return res.status(400).json({ success: false, message: "enrollmentNo is required" });
+    }
+    req.body.enrollmentNo = enrollment;
+    const existing = await studentDetails.findOne({ enrollmentNo: enrollment });
+    if (!req.body.batch) {
+      return res.status(400).json({ success: false, message: "Batch is required" });
+    }
+    const batchParsed = parseInt(req.body.batch, 10);
+    if (!Number.isFinite(batchParsed)) {
+      return res.status(400).json({ success: false, message: "Batch must be a valid year" });
+    }
+    // Excel import overwrite support (normalize multipart field values)
+    const rawType = (req.body?.type || "").toString().toLowerCase();
+    const rawOverwrite = (req.body?.overwrite ?? "").toString().toLowerCase();
+    const isExcelImport = rawType === "excel-import" || rawType === "excel" || rawType === "import";
+    const allowOverwrite = rawOverwrite === "true" || rawOverwrite === "1" || rawOverwrite === "yes" || rawOverwrite === "on";
+
     if (existing) {
+      if (isExcelImport && allowOverwrite) {
+        const updatePayload = { ...req.body, batch: batchParsed };
+        // Remove control fields that shouldn't be saved
+        delete updatePayload.type;
+        delete updatePayload.overwrite;
+        if (req.file?.filename) updatePayload.profile = req.file.filename;
+        await studentDetails.updateOne({ enrollmentNo: req.body.enrollmentNo }, { $set: updatePayload });
+        return res.json({ success: true, message: "Student Details Updated (Import Overwrite)!" });
+      }
       return res.status(400).json({ success: false, message: "Student With This Enrollment Already Exists" });
     }
-    const user = await studentDetails.create({ ...req.body, profile: req.file?.filename });
+    const createPayload = { ...req.body, batch: batchParsed, profile: req.file?.filename };
+    delete createPayload.type;
+    delete createPayload.overwrite;
+    const user = await studentDetails.create(createPayload);
     res.json({ success: true, message: "Student Details Added!", user });
   } catch (error) {
     res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -77,6 +107,14 @@ const updateDetails = async (req, res) => {
       if (email && !validateEmail(email)) {
         return res.status(400).json({ success: false, message: "Invalid email format." });
     }
+      // Normalize batch if provided
+      if (typeof req.body.batch !== 'undefined') {
+        const parsedBatch = parseInt(req.body.batch, 10);
+        if (!Number.isFinite(parsedBatch)) {
+          return res.status(400).json({ success: false, message: "Batch must be a valid year" });
+        }
+        req.body.batch = parsedBatch;
+      }
       let user;
       if (req.file) {
           user = await studentDetails.findByIdAndUpdate(req.params.id, { ...req.body, profile: req.file.filename });
@@ -290,6 +328,34 @@ const searchStudents = async (req, res) => {
   }
 };
 
+// Reports: filter students by batch and branch
+const getStudentsByBatchAndBranch = async (req, res) => {
+  try {
+    const { batch, branch } = req.query;
+
+    const filter = {};
+    if (batch) {
+      const parsed = parseInt(batch, 10);
+      if (!Number.isFinite(parsed)) {
+        return res.status(400).json({ success: false, message: "Invalid batch" });
+      }
+      filter.batch = parsed;
+    }
+    if (branch) {
+      filter.branch = branch;
+    }
+
+    if (Object.keys(filter).length === 0) {
+      return res.status(400).json({ success: false, message: "Provide at least batch or branch" });
+    }
+
+    const students = await studentDetails.find(filter).populate("books.bookId", "bookName author bookCode");
+    return res.json({ success: true, count: students.length, students });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
+  }
+};
+
 module.exports = {
   getDetails,
   getDetails2,
@@ -303,4 +369,5 @@ module.exports = {
   assignBooksToStudent,
   returnBooks,
   searchStudents,
+  getStudentsByBatchAndBranch,
 };

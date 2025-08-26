@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getDetails, addDetails, updateDetails, deleteDetails, getCount, updateTimetable } = require("../../controllers/Faculty/details.controller.js")
+const { getDetails, addDetails, updateDetails, deleteDetails, getCount, updateTimetable, getFacultyByBatchAndBranch } = require("../../controllers/Faculty/details.controller.js")
 const upload = require("../../middlewares/multer.middleware.js")
 const facultyDetails = require("../../models/Faculty/details.model.js")
 
@@ -36,6 +36,8 @@ router.delete("/deleteDetails/:id", deleteDetails);
 router.get("/count", getCount);
 
 router.put("/updateTimetable/:id", updateTimetable);
+
+router.get("/reports/byBatchBranch", getFacultyByBatchAndBranch);
 
 
 
