@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FiPlay, FiCode, FiTerminal, FiCopy, FiTrash2 } from "react-icons/fi";
-import { baseApiURL } from "../../config";
+import { baseApiURL } from "../../baseUrl";
 
 const OnlineCompiler = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("python");
