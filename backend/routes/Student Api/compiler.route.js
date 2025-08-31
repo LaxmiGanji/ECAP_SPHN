@@ -39,7 +39,7 @@ router.post("/execute", async (req, res) => {
         fs.writeFileSync(pythonFile, code);
 
         output = await new Promise((resolve, reject) => {
-          exec(`python "${pythonFile}"`, { timeout: 10000 }, (err, stdout, stderr) => {
+          exec(`python3 "${pythonFile}"`, { timeout: 10000 }, (err, stdout, stderr) => {
             if (err) {
               reject(stderr || err.message);
             } else {
@@ -139,10 +139,34 @@ router.post("/execute", async (req, res) => {
 
 // Health check route
 router.get("/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "Compiler service is running",
-    supportedLanguages: ["python", "java", "c"]
+  // Check if compilers are available
+  const compilers = {
+    python: false,
+    java: false,
+    c: false
+  };
+
+  // Test Python
+  exec('python3 --version', (err) => {
+    compilers.python = !err;
+    
+    // Test Java
+    exec('java --version', (err) => {
+      compilers.java = !err;
+      
+      // Test C
+      exec('gcc --version', (err) => {
+        compilers.c = !err;
+        
+        res.json({
+          success: true,
+          message: "Compiler service is running",
+          supportedLanguages: ["python", "java", "c"],
+          compilers: compilers,
+          timestamp: new Date().toISOString()
+        });
+      });
+    });
   });
 });
 

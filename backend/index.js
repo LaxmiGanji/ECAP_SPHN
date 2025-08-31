@@ -9,14 +9,22 @@ const port = process.env.PORT || 10000;
 const cors = require("cors");
 
 app.use(cors({
-  origin: "https://ecap-sphn-frontend.onrender.com", // Replace with your actual frontend URL
+  origin: process.env.FRONTEND_URL || "https://ecap-sphn-frontend.onrender.com",
   credentials: true
 }));
 
 app.use(express.json()); //to convert request data to json
 
 app.get("/", (req, res) => {
-  res.send("Hello 👋 I am Working Fine 🚀")
+  res.json({
+    message: "Hello 👋 I am Working Fine 🚀",
+    status: "running",
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      compiler: "/api/compiler",
+      health: "/api/compiler/health"
+    }
+  });
 })
 
 
