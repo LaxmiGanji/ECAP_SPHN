@@ -419,7 +419,7 @@ const FacultyTimetable = () => {
                                       disabled={["Break", "Sports", "Library", "Other"].includes(period.subject)}
                                     >
                                       <option value="">Section</option>
-                                      {["A", "B", "C", "D"].map((sec) => (
+                                      {["A", "B", "C", "D", "SOC", "ATT", "WIPRO TRAINING"].map((sec) => (
                                         <option key={sec} value={sec}>
                                           {sec}
                                         </option>
