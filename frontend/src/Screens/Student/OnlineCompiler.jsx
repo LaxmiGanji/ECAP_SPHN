@@ -1,334 +1,170 @@
-import { useState, useEffect } from "react";
-import { FiPlay, FiCode, FiTerminal, FiCopy, FiTrash2 } from "react-icons/fi";
-import { baseApiURL } from "../../baseUrl";
+import React, { useState } from 'react';
+import axios from 'axios';
 
 const OnlineCompiler = () => {
-  const [selectedLanguage, setSelectedLanguage] = useState("python");
-  const [code, setCode] = useState("");
-  const [output, setOutput] = useState("");
-  const [isRunning, setIsRunning] = useState(false);
-  const [error, setError] = useState("");
-  const [backendStatus, setBackendStatus] = useState("checking");
+  const [code, setCode] = useState('');
+  const [language, setLanguage] = useState('python');
+  const [output, setOutput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Initialize with default template and check backend status
-  useEffect(() => {
-    setCode(defaultTemplates.python);
-    checkBackendStatus();
-  }, []);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setOutput('');
 
-  const checkBackendStatus = async () => {
     try {
-      const response = await fetch(`${baseApiURL()}/api/compiler/health`);
-      if (response.ok) {
-        setBackendStatus("available");
+      const response = await axios.post('http://localhost:5000/api/compiler/execute', {
+        language,
+        code
+      });
+      
+      if (response.data.error) {
+        setError(response.data.error);
       } else {
-        setBackendStatus("unavailable");
+        setOutput(response.data.output);
       }
     } catch (err) {
-      setBackendStatus("unavailable");
+      setError(err.response?.data?.error || 'An error occurred while executing the code');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  
-  // Default code templates for each language
-  const defaultTemplates = {
-    python: `# Welcome to Python Online Compiler
-print("Hello, World!")
-
-# Write your Python code here
-name = input("Enter your name: ")
-print(f"Hello, {name}!")`,
-    java: `// Welcome to Java Online Compiler
-import java.util.Scanner;
-
-public class Main {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
-        
-        // Write your Java code here
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter your name: ");
-        String name = scanner.nextLine();
-        System.out.println("Hello, " + name + "!");
-    }
-}`,
-    c: `// Welcome to C Online Compiler
-#include <stdio.h>
+  const codeSamples = {
+    c: `#include <stdio.h>
 
 int main() {
     printf("Hello, World!\\n");
-    
-    // Write your C code here
-    char name[100];
-    printf("Enter your name: ");
-    scanf("%s", name);
-    printf("Hello, %s!\\n", name);
-    
     return 0;
-}`
-  };
-
-  const handleLanguageChange = (language) => {
-    setSelectedLanguage(language);
-    setCode(defaultTemplates[language]);
-    setOutput("");
-    setError("");
-  };
-
-  const handleRunCode = async () => {
-    if (!code.trim()) {
-      setError("Please enter some code to run.");
-      return;
+}`,
+    java: `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
     }
-
-    setIsRunning(true);
-    setError("");
-    setOutput("");
-
-    // Check if backend is accessible first
-    try {
-      const healthCheck = await fetch(`${baseApiURL()}/api/compiler/health`);
-      if (!healthCheck.ok) {
-        throw new Error("Backend not accessible");
-      }
-    } catch (err) {
-      setError("Backend compiler service is not available. This feature requires the backend server to be running with Python, Java, and C compilers installed.");
-      setIsRunning(false);
-      return;
-    }
-    
-    try {
-      const response = await fetch(`${baseApiURL()}/api/compiler/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: code,
-          language: selectedLanguage
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        setOutput(data.output);
-      } else {
-        setError(data.error || "An error occurred while running the code.");
-      }
-    } catch (err) {
-      console.error("Compiler error:", err);
-      if (err.message.includes("Failed to fetch")) {
-        setError("Backend server is not accessible. Please ensure the backend server is running and the compiler service is available.");
-      } else {
-        setError("Network error. Please check your connection and try again.");
-      }
-    } finally {
-      setIsRunning(false);
-    }
+}`,
+    python: `print("Hello, World!")`
   };
 
-  const handleClearCode = () => {
-    setCode(defaultTemplates[selectedLanguage]);
-    setOutput("");
-    setError("");
-  };
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(code);
-  };
-
-  const handleCopyOutput = () => {
-    navigator.clipboard.writeText(output);
+  const handleLanguageChange = (e) => {
+    const newLanguage = e.target.value;
+    setLanguage(newLanguage);
+    setCode(codeSamples[newLanguage]);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Online Code Compiler</h1>
-          <p className="text-gray-600">Write, compile, and run your code in C, Java, and Python</p>
-          
-          {/* Backend Status Indicator */}
-          <div className="mt-4">
-            {backendStatus === "checking" && (
-              <div className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg">
-                <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse mr-2"></div>
-                Checking backend status...
-              </div>
-            )}
-            {backendStatus === "available" && (
-              <div className="inline-flex items-center px-3 py-2 bg-green-100 text-green-800 rounded-lg">
-                <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                Backend compiler service is available
-              </div>
-            )}
-            {backendStatus === "unavailable" && (
-              <div className="inline-flex items-center px-3 py-2 bg-red-100 text-red-800 rounded-lg">
-                <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                Backend compiler service is not available
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+            Online Code Compiler
+          </h1>
+          <p className="text-gray-400 mt-2">Write, compile, and run code in C, Java, and Python</p>
         </div>
-
-        {/* Language Selection */}
-        <div className="mb-6">
-          <div className="flex space-x-2 bg-white rounded-xl p-2 shadow-lg">
-            {[
-              { id: "python", name: "Python", color: "from-green-500 to-green-600" },
-              { id: "java", name: "Java", color: "from-orange-500 to-orange-600" },
-              { id: "c", name: "C", color: "from-blue-500 to-blue-600" }
-            ].map((lang) => (
-              <button
-                key={lang.id}
-                onClick={() => handleLanguageChange(lang.id)}
-                className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-300 ${
-                  selectedLanguage === lang.id
-                    ? `bg-gradient-to-r ${lang.color} text-white shadow-lg transform scale-105`
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
+        
+        <div className="bg-gray-800 rounded-lg shadow-xl p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center">
+              <label htmlFor="language" className="mr-2 text-gray-300">Language:</label>
+              <select 
+                id="language" 
+                value={language} 
+                onChange={handleLanguageChange}
+                className="bg-gray-700 text-white px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <div className="flex items-center justify-center space-x-2">
-                  <FiCode className="w-5 h-5" />
-                  <span>{lang.name}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Code Editor */}
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-white font-semibold flex items-center">
-                  <FiCode className="w-5 h-5 mr-2" />
-                  Code Editor
-                </h3>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleCopyCode}
-                    className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                    title="Copy Code"
-                  >
-                    <FiCopy className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={handleClearCode}
-                    className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                    title="Clear Code"
-                  >
-                    <FiTrash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="c">C</option>
+              </select>
             </div>
             
-            <div className="p-4">
-              <textarea
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="Write your code here..."
-                className="w-full h-96 p-4 bg-gray-900 text-green-400 font-mono text-sm rounded-lg border-0 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
-                spellCheck="false"
-              />
-              
-              <div className="mt-4">
-                                 <button
-                   onClick={handleRunCode}
-                   disabled={isRunning || backendStatus !== "available"}
-                   className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
-                 >
-                  {isRunning ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Running...</span>
-                    </>
-                  ) : (
-                    <>
-                      <FiPlay className="w-5 h-5" />
-                      <span>Run Code</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Output Terminal */}
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-white font-semibold flex items-center">
-                  <FiTerminal className="w-5 h-5 mr-2" />
-                  Output Terminal
-                </h3>
-                {output && (
-                  <button
-                    onClick={handleCopyOutput}
-                    className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                    title="Copy Output"
-                  >
-                    <FiCopy className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            <div className="p-4">
-              <div className="bg-gray-900 text-green-400 font-mono text-sm rounded-lg p-4 h-96 overflow-y-auto">
-                {error ? (
-                  <div className="text-red-400">
-                    <span className="text-red-500">Error:</span> {error}
-                  </div>
-                ) : output ? (
-                  <pre className="whitespace-pre-wrap">{output}</pre>
-                                 ) : (
-                   <div className="text-gray-500 italic">
-                     <div>Output will appear here after running your code...</div>
-                     <div className="mt-2 text-xs">
-                       <strong>Note:</strong> This feature requires the backend server to be running with Python, Java, and C compilers installed.
-                     </div>
-                   </div>
-                 )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Features Info */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl p-6 shadow-lg">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
-              <FiCode className="w-6 h-6 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Multiple Languages</h3>
-            <p className="text-gray-600">Support for C, Java, and Python programming languages</p>
+            <button 
+              onClick={() => setCode(codeSamples[language])}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors"
+            >
+              Reset Code
+            </button>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-lg">
-            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
-              <FiPlay className="w-6 h-6 text-white" />
+          <div className="mb-4">
+            <div className="bg-gray-900 rounded-t-md p-2 flex items-center">
+              <div className="flex space-x-1.5 mr-3">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              </div>
+              <span className="text-sm text-gray-400">main.{language === 'python' ? 'py' : language === 'java' ? 'java' : 'c'}</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Instant Execution</h3>
-            <p className="text-gray-600">Run your code immediately and see results in real-time</p>
+            <textarea
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder={`Write your ${language} code here...`}
+              rows={18}
+              className="w-full bg-gray-900 text-gray-100 p-4 font-mono text-sm rounded-b-md focus:outline-none focus:ring-1 focus:ring-blue-500 resize-y"
+            />
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-lg">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
-              <FiTerminal className="w-6 h-6 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Live Output</h3>
-            <p className="text-gray-600">View program output and error messages in the terminal</p>
-          </div>
+          <button 
+            onClick={handleSubmit} 
+            disabled={isLoading}
+            className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${
+              isLoading 
+                ? 'bg-gray-700 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
+            }`}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Running Code...
+              </div>
+            ) : 'Run Code'}
+          </button>
         </div>
+        
+        {output && (
+          <div className="bg-gray-800 rounded-lg shadow-xl p-6 mb-6">
+            <h3 className="text-lg font-semibold mb-3 text-green-400 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Output
+            </h3>
+            <div className="bg-gray-900 rounded-md p-4">
+              <pre className="whitespace-pre-wrap text-green-300 font-mono text-sm">{output}</pre>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-gray-800 rounded-lg shadow-xl p-6">
+            <h3 className="text-lg font-semibold mb-3 text-red-400 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              Error
+            </h3>
+            <div className="bg-gray-900 rounded-md p-4">
+              <pre className="whitespace-pre-wrap text-red-300 font-mono text-sm">{error}</pre>
+            </div>
+          </div>
+        )}
+        
+        {!output && !error && (
+          <div className="bg-gray-800 rounded-lg shadow-xl p-6">
+            <h3 className="text-lg font-semibold mb-3 text-gray-300">How to Use</h3>
+            <ul className="list-disc list-inside text-gray-400 space-y-2">
+              <li>Select your programming language from the dropdown</li>
+              <li>Write or paste your code in the editor</li>
+              <li>Click the "Run Code" button to execute your program</li>
+              <li>View the output or any errors in the results section</li>
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

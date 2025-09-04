@@ -41,8 +41,7 @@ app.use("/api/student/details", require("./routes/Student Api/details.route"));
 app.use("/api/faculty/details", require("./routes/Faculty Api/details.route"));
 app.use("/api/admin/details", require("./routes/Admin Api/details.route"));
 app.use("/api/library/details", require("./routes/Library Api/details.route"));
-// Compiler Api
-app.use("/api/compiler", require("./routes/Student Api/compiler.route"));
+
 
 // Other Apis
 app.use("/api/timetable", require("./routes/Other Api/timetable.route"));
@@ -53,7 +52,7 @@ app.use("/api/marks", require("./routes/Other Api/marks.route"));
 app.use("/api/branch", require("./routes/Other Api/branch.route"));
 app.use("/api/library", require("./routes/Other Api/library.route"));
 app.use("/api/attendence", require("./routes/Other Api/attedence.route"));
-
+app.use('/api/compiler', require("./routes/Other Api/compiler.route"));
 
 app.listen(port, () => {
   console.log(`Server Listening On http://localhost:${port}`);
