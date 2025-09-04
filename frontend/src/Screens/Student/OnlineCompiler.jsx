@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { baseApiURL } from "../../baseUrl";
 
 const OnlineCompiler = () => {
   const [code, setCode] = useState('');
@@ -15,7 +16,7 @@ const OnlineCompiler = () => {
     setOutput('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/compiler/execute', {
+      const response = await axios.post(`${baseApiURL()}/compiler/execute`, {
         language,
         code
       });
